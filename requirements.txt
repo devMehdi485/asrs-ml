@@ -1,0 +1,29 @@
+# --- Coeur data science (déjà présents dans l'environnement, versions indicatives) ---
+pandas>=2.2
+numpy>=1.26
+scikit-learn>=1.4
+matplotlib>=3.8
+seaborn>=0.13
+
+# --- NLP classique ---
+nltk>=3.8
+gensim>=4.3            # word2vec + CoherenceModel (peut être délicat sur Python 3.13 -> fallback LSA)
+wordcloud>=1.9
+pyldavis>=3.4          # visualisation interactive LDA
+
+# --- NLP moderne (embeddings de phrases) ---
+sentence-transformers>=2.7   # tire torch (CPU) ; modèle all-MiniLM-L6-v2
+# torch est installé automatiquement par sentence-transformers ; sinon : pip install torch --index-url https://download.pytorch.org/whl/cpu
+
+# --- Réduction de dimension & clustering densité ---
+umap-learn>=0.5
+hdbscan>=0.8           # peut nécessiter des outils de compilation ; fallback K-Means
+
+# --- Dashboard ---
+streamlit>=1.33
+plotly>=5.20
+
+# --- Utilitaires ---
+pyarrow>=15            # écriture/lecture parquet
+joblib>=1.3            # sérialisation des modèles
+tqdm>=4.66

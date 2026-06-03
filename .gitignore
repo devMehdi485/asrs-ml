@@ -1,0 +1,25 @@
+# --- Données (volumineuses : non versionnées) ---
+# Voir README.md / GUIDE_TELECHARGEMENT_ASRS.md pour obtenir le dataset.
+data/*.csv
+data/*.xlsx
+data/*.xls
+data/processed/
+!data/.gitkeep
+
+# --- Artefacts Python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.ipynb_checkpoints/
+
+# --- Environnements virtuels ---
+.venv/
+venv/
+env/
+
+# --- Divers / OS / logs ---
+.DS_Store
+Thumbs.db
+*.log
+nbconvert.log
+streamlit.log
