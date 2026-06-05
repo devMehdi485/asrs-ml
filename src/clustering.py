@@ -169,7 +169,10 @@ def cluster_metrics(X, labels, truth=None) -> dict:
         out.update(silhouette=float("nan"), davies_bouldin=float("nan"),
                    calinski_harabasz=float("nan"))
     if truth is not None:
-        truth = np.asarray(truth)
+        # Robustesse : avec pandas 3.0 (type Arrow string), .astype(str) garde
+        # les NA -> sklearn lève "Input contains NaN". On nettoie en objet str.
+        truth = pd.Series(truth).astype("object").where(
+            pd.notna(pd.Series(truth)), "n/d").astype(str).to_numpy()
         out["ARI_vs_anomaly"] = round(float(adjusted_rand_score(truth[mask], labels[mask])), 4)
         out["purete_vs_anomaly"] = round(float(_purity(labels, truth)), 4)
     # équilibre : ratio plus grand / plus petit cluster
@@ -207,11 +210,23 @@ def select_best_model(comparison: pd.DataFrame) -> tuple[str, str]:
         sil_h = comparison.loc["HDBSCAN", "silhouette"]
         sil_k = comparison.loc["KMeans", "silhouette"]
         bruit_h = comparison.loc["HDBSCAN", "taux_bruit"]
+        nclust_h = comparison.loc["HDBSCAN", "n_clusters"]
+        # Garde-fou : un HDBSCAN qui s'effondre en très peu de clusters (ou
+        # noyés de bruit) n'est PAS exploitable thématiquement, même si sa
+        # silhouette est élevée (2 gros blobs bien séparés => silhouette haute
+        # mais sans valeur métier). On exige une granularité minimale.
+        MIN_CLUSTERS = 6
+        if nclust_h < MIN_CLUSTERS:
+            return ("KMeans",
+                    f"K-Means retenu : HDBSCAN ne forme que {int(nclust_h)} "
+                    f"clusters (effondrement non interprétable), malgré une "
+                    f"silhouette {sil_h:.3f}. K-Means offre une granularité "
+                    f"thématique exploitable (silhouette {sil_k:.3f}).")
         if sil_h >= sil_k - 0.02 and bruit_h < 0.35:
             return ("HDBSCAN",
                     f"HDBSCAN retenu : silhouette {sil_h:.3f} ≈/≥ K-Means "
-                    f"({sil_k:.3f}) et taux de bruit exploitable "
-                    f"({bruit_h:.0%}) réutilisé pour les signaux faibles.")
+                    f"({sil_k:.3f}), {int(nclust_h)} clusters et taux de bruit "
+                    f"exploitable ({bruit_h:.0%}) réutilisé pour les signaux faibles.")
         return ("KMeans",
                 f"K-Means retenu : silhouette {sil_k:.3f} vs HDBSCAN "
                 f"{sil_h:.3f} (bruit {bruit_h:.0%}), clusters plus équilibrés "

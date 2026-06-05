@@ -87,6 +87,14 @@ DATA_CSV = next((p for p in CANDIDATS if os.path.exists(p)), "data/ASRS_export.c
 # points serait illisible et lent ; on échantillonne pour l'affichage).
 N_VIZ = 25000
 
+# Granularité du clustering (réglable) :
+#  - N_CLUSTERS    : nb de thèmes pour K-Means (granularité métier visée)
+#  - MIN_CLUSTER_SIZE : taille mini d'un cluster HDBSCAN (~0.1 % du corpus).
+# IMPORTANT : ne PAS faire dépendre min_cluster_size de len(df)//50, sinon sur
+# 125k il vaut ~2500 et HDBSCAN s'effondre en 2 clusters.
+N_CLUSTERS = 15
+MIN_CLUSTER_SIZE = 150
+
 # GPU si disponible (accélère fortement les embeddings)
 print("Device embeddings :", V.detect_device().upper())
 print("Dataset sélectionné :", DATA_CSV)
@@ -142,23 +150,44 @@ md(r"""
 """)
 
 code(r"""
-df["text_raw"] = P.build_unified_text(df, mapping)
-df["datetime"] = P.parse_asrs_date(df[mapping["date"]])
-df["annee"] = df["datetime"].dt.year
+PRE_CACHE = os.path.join(PROC_DIR, "reports_pre.parquet")
+CANON = ["text_raw", "text_light", "text_clean", "datetime", "annee",
+         "anomaly", "flight_phase", "aircraft"]
 
-# Retrait des rapports sans texte
-df = df[df["text_raw"].str.len() > 20].reset_index(drop=True)
+if os.path.exists(PRE_CACHE):
+    df = pd.read_parquet(PRE_CACHE)
+    print("Prétraitement rechargé du cache :", df.shape)
+else:
+    df["text_raw"] = P.build_unified_text(df, mapping)
+    df["datetime"] = P.parse_asrs_date(df[mapping["date"]])
+    df["annee"] = df["datetime"].dt.year
+    # Renommer les métadonnées en noms CANONIQUES (stables pour la suite)
+    ren = {mapping["anomaly"]: "anomaly"}
+    if "flight_phase" in mapping: ren[mapping["flight_phase"]] = "flight_phase"
+    if "aircraft" in mapping:     ren[mapping["aircraft"]] = "aircraft"
+    df = df.rename(columns=ren)
+    df = df[df["text_raw"].str.len() > 20].reset_index(drop=True)
 
-# Deux versions du texte :
-#  - text_light : phrases naturelles nettoyées (désid. retirée) -> EMBEDDINGS
-#  - text_clean : sac-de-mots lemmatisé sans stopwords         -> TF-IDF / LDA
-df["text_light"] = df["text_raw"].map(P.light_clean)
-texts_clean, token_lists = P.preprocess_corpus(df["text_raw"])
-df["text_clean"] = texts_clean
+    # Deux versions du texte :
+    #  - text_light : phrases naturelles nettoyées (désid.) -> EMBEDDINGS
+    #  - text_clean : sac-de-mots lemmatisé sans stopwords  -> TF-IDF / LDA
+    df["text_light"] = df["text_raw"].map(P.light_clean)
+    texts_clean, _ = P.preprocess_corpus(df["text_raw"])
+    df["text_clean"] = texts_clean
+    df["text_raw"] = df["text_raw"].str.slice(0, 2000)   # borne la taille du cache
+    df = df[[c for c in CANON if c in df.columns]]
+    df.to_parquet(PRE_CACHE)
+    print("Prétraitement calculé & mis en cache :", df.shape)
+
+# À partir d'ici, le mapping est l'IDENTITÉ sur les noms canoniques.
+mapping = {"anomaly": "anomaly"}
+for c in ("flight_phase", "aircraft"):
+    if c in df.columns: mapping[c] = c
+# token_lists reconstruits depuis text_clean (déjà lemmatisé, espace-séparé)
+token_lists = [t.split() for t in df["text_clean"]]
 print("Rapports retenus :", len(df))
-print("Brut   :", df['text_raw'].iloc[0][:150])
-print("Light  :", df['text_light'].iloc[0][:150])
-print("Clean  :", df['text_clean'].iloc[0][:150])
+print("Light :", str(df['text_light'].iloc[0])[:150])
+print("Clean :", str(df['text_clean'].iloc[0])[:150])
 """)
 
 md(r"""
@@ -216,27 +245,38 @@ sur les **mêmes données** pour une comparaison équitable.
 """)
 
 code(r"""
-X_red, reducer, methode_red = C.reduce_dimensions(embeddings, n_components=5,
-                                                  seed=RANDOM_STATE)
+# Réduction UMAP mise en cache (coûteuse sur 125k) : rechargée si la taille colle.
+RED_CACHE = os.path.join(PROC_DIR, "reduced.npy")
+if os.path.exists(RED_CACHE) and np.load(RED_CACHE, mmap_mode="r").shape[0] == len(df):
+    X_red = np.load(RED_CACHE); methode_red = "UMAP (cache)"
+else:
+    X_red, reducer, methode_red = C.reduce_dimensions(embeddings, n_components=5,
+                                                      seed=RANDOM_STATE)
+    np.save(RED_CACHE, X_red)
 print("Réduction :", methode_red, X_red.shape)
 
-# Choix de k pour K-Means (coude + silhouette)
-elbow = C.choose_k_elbow(X_red, k_range=range(3, 13), seed=RANDOM_STATE)
+# Méthode du coude + silhouette (transparence). NB : sur des embeddings
+# sémantiques, la silhouette favorise mécaniquement très peu de clusters ; pour
+# une analyse THÉMATIQUE on vise une granularité métier (N_CLUSTERS), choix
+# documenté plutôt que l'argmax silhouette (qui donnerait k≈2-3).
+elbow = C.choose_k_elbow(X_red, k_range=range(2, 25), seed=RANDOM_STATE)
 fig, ax = plt.subplots(1, 2, figsize=(14, 4))
 ax[0].plot(elbow["k"], elbow["inertie"], "o-"); ax[0].set_title("Méthode du coude (inertie)")
 ax[1].plot(elbow["k"], elbow["silhouette"], "o-", color="green"); ax[1].set_title("Silhouette vs k")
-for a in ax: a.set_xlabel("k")
+for a in ax: a.set_xlabel("k"); a.axvline(N_CLUSTERS, ls="--", c="red", alpha=.5)
 plt.tight_layout(); plt.show()
 
-best_k = int(elbow.loc[elbow["silhouette"].idxmax(), "k"])
-print("k retenu (silhouette max) :", best_k)
+best_k = N_CLUSTERS
+print(f"k retenu pour K-Means : {best_k} (granularité thématique visée). "
+      f"Silhouette à ce k : {float(elbow.loc[elbow['k']==best_k,'silhouette'].iloc[0]):.3f}")
 """)
 
 code(r"""
 km_model, labels_km = C.cluster_kmeans(X_red, best_k, seed=RANDOM_STATE)
 
 if C.hdbscan_available():
-    hdb_model, labels_hdb = C.cluster_hdbscan(X_red, min_cluster_size=max(20, len(df)//50))
+    hdb_model, labels_hdb = C.cluster_hdbscan(X_red, min_cluster_size=MIN_CLUSTER_SIZE,
+                                              min_samples=10)
     resultats = {"KMeans": labels_km, "HDBSCAN": labels_hdb}
 else:
     print("hdbscan indisponible -> K-Means uniquement.")
