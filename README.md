@@ -114,6 +114,17 @@ Le dashboard comporte **5 pages** : *Executive Summary* (synthèse auto-génér�
 *Vue d'ensemble*, *Clusters & thèmes* (projection 2D + nuage de mots par cluster),
 *Temporel* (volume, heatmap, topics-over-time), *Signaux faibles*.
 
+**3. Dashboard React (AeroInsight AI)** — version web « pro » (React + Vite +
+Tailwind + Recharts), alimentée par un export JSON statique. Voir `frontend/README.md`.
+
+```bash
+python notebooks_assets/export_json.py   # exporte les résultats en JSON
+cd frontend && npm install && npm run dev # http://localhost:5173
+```
+
+Deux dashboards sont donc disponibles : **Streamlit** (Python, rapide à lancer) et
+**React/AeroInsight AI** (web, design soigné reproduisant la maquette Figma).
+
 ---
 
 ## 🧪 Méthodologie & critères d'évaluation
