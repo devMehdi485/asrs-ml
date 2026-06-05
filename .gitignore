@@ -6,6 +6,9 @@ data/*.xls
 data/processed/
 !data/.gitkeep
 
+# Dossier de transfert USB (duplicata volumineux, non versionné)
+USB Drive/
+
 # --- Artefacts Python ---
 __pycache__/
 *.py[cod]
