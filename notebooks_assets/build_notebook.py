@@ -397,10 +397,16 @@ cv = CountVectorizer(max_features=3000, min_df=5, max_df=0.5, ngram_range=(1,1))
 X_counts = cv.fit_transform(df["text_clean"])
 vocab = cv.get_feature_names_out()
 
+# LDA ajusté sur un ÉCHANTILLON (50k) : qualité des thèmes quasi identique,
+# mais bien plus rapide qu'un fit sur 125k.
+N_LDA = min(50000, X_counts.shape[0])
+lda_idx = (rng.choice(X_counts.shape[0], N_LDA, replace=False)
+           if X_counts.shape[0] > N_LDA else np.arange(X_counts.shape[0]))
 n_topics = best_k
 lda = LatentDirichletAllocation(n_components=n_topics, random_state=RANDOM_STATE,
                                 learning_method="batch", max_iter=20)
-lda.fit(X_counts)
+lda.fit(X_counts[lda_idx])
+print(f"LDA ajusté sur {N_LDA} documents échantillonnés.")
 
 def top_words(model, feat, n=10):
     return [[feat[i] for i in topic.argsort()[::-1][:n]] for topic in model.components_]
@@ -415,8 +421,9 @@ code(r"""
 try:
     from gensim.corpora import Dictionary
     from gensim.models import CoherenceModel
-    dic = Dictionary(token_lists)
-    cm = CoherenceModel(topics=topics_words, texts=token_lists,
+    toks_coh = [token_lists[i] for i in lda_idx]   # même échantillon que le LDA
+    dic = Dictionary(toks_coh)
+    cm = CoherenceModel(topics=topics_words, texts=toks_coh,
                         dictionary=dic, coherence="c_v")
     print(f"Cohérence c_v moyenne du modèle LDA : {cm.get_coherence():.4f}")
 except Exception as e:
