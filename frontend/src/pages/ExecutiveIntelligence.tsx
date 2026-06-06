@@ -1,100 +1,84 @@
-import {
-  ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Cell,
-} from "recharts";
+import { Download } from "lucide-react";
 import { useData } from "../context";
-import { Kpi, Card, Section, PageHeader, Trend, Chip } from "../components/ui";
-import { C, colorFor, fmt, trendClass } from "../lib";
+import { Card, Section, PageHeader } from "../components/ui";
+import { fmt, trendClass } from "../lib";
 
 export default function ExecutiveIntelligence() {
   const { data } = useData()!;
   if (!data) return null;
   const m = data.meta;
-  const topCauses = data.causes.slice(0, 6).map((c) => ({
-    label: c.label.length > 34 ? c.label.slice(0, 34) + "…" : c.label,
-    nb: c.nb_rapports, cluster: c.cluster,
-  }));
-  const up = data.clusters.filter((c) => c.trend.includes("hausse")).slice(0, 4);
-  const down = data.clusters.filter((c) => c.trend.includes("baisse")).slice(0, 2);
-  const topWeak = [...data.weak_signals].slice(0, 3);
+  const top = data.causes[0];
+  const rising = data.clusters.filter((c) => c.trend.includes("hausse"));
+  const f1 = data.classification.models?.[0];
+  const period = m.period ? `${m.period[0]} – ${m.period[1]}` : "—";
 
   return (
     <div>
-      <PageHeader title="Executive Intelligence"
-        subtitle="Synthèse stratégique auto-générée des risques de sécurité aérienne"
+      <PageHeader title="Executive Intelligence Report"
+        subtitle={`Analyse stratégique de sécurité · Période : ${period}`}
         right={
-          <div className="flex items-center gap-2 rounded-full border border-line bg-surface px-3 py-1.5 text-xs text-muted">
-            <span className="h-2 w-2 animate-pulse rounded-full bg-up" />
-            {m.model} · {m.period ? `${m.period[0].slice(0, 4)}–${m.period[1].slice(0, 4)}` : ""}
-          </div>
+          <button onClick={() => window.print()}
+            className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-accent2 to-accent px-4 py-2.5 text-sm font-semibold text-white shadow-glow">
+            <Download size={16} /> Exporter le rapport
+          </button>
         } />
 
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-5">
-        <Kpi label="Rapports analysés" value={fmt(m.n_reports)} icon="🛩️" accent />
-        <Kpi label="Thèmes d'incidents" value={m.n_themes} icon="🧩" accent />
-        <Kpi label="Période" value={m.period ? `${m.period[0].slice(0, 4)}–${m.period[1].slice(0, 4)}` : "—"} icon="🗓️" />
-        <Kpi label="Signaux faibles" value={m.n_weak} icon="⚠️" />
-        <Kpi label="Thèmes en hausse" value={m.n_up} icon="📈" />
-      </div>
-
-      <div className="mt-6 grid grid-cols-1 gap-5 lg:grid-cols-5">
-        <div className="lg:col-span-3">
-          <Section>Clusters les plus importants</Section>
-          <Card>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={topCauses} layout="vertical" margin={{ left: 10, right: 20 }}>
-                <XAxis type="number" stroke={C.muted} fontSize={11} />
-                <YAxis type="category" dataKey="label" width={170} stroke={C.muted} fontSize={11} />
-                <Tooltip contentStyle={tooltipStyle} cursor={{ fill: "rgba(255,255,255,.04)" }} />
-                <Bar dataKey="nb" radius={[0, 6, 6, 0]}>
-                  {topCauses.map((d) => <Cell key={d.cluster} fill={colorFor(d.cluster)} />)}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </Card>
+      <Card>
+        <h2 className="text-xl font-bold">Synthèse exécutive</h2>
+        <div className="mt-3 space-y-4 text-[0.95rem] leading-relaxed text-muted">
+          <p>
+            L'analyse de <b className="text-ink">{fmt(m.n_reports)}</b> rapports d'incidents NASA ASRS
+            ({period}) met en évidence les tendances clés des risques de sécurité aérienne. Le pipeline
+            NLP (embeddings sémantiques + {m.model}) a identifié <b className="text-ink">{m.n_themes}</b> thèmes
+            d'incidents distincts.
+          </p>
+          <p>
+            Le thème prédominant est <b className="text-ink">« {top?.label} »</b> ({top?.["part_%"]}% du corpus,
+            anomalie dominante : {String(top?.anomalie_dominante).slice(0, 50)}).
+            {rising.length > 0 && <> <b className="text-ink">{rising.length}</b> thèmes sont en croissance récente,
+              au premier rang desquels <b className="text-ink">« {rising[0].label.split(" · ")[0]} »</b> ({rising[0].trend.replace(/[↑↓→]/g, "").trim()}).</>}
+          </p>
+          <p>
+            Le système de détection de signaux faibles a relevé <b className="text-ink">{m.n_weak}</b> rapports
+            atypiques nécessitant une investigation prioritaire.
+            {f1 && <> La classification supervisée des types d'incidents atteint un
+              <b className="text-ink"> F1 pondéré de {f1.f1_weighted}</b> ({f1.name}).</>}
+          </p>
         </div>
+      </Card>
 
-        <div className="lg:col-span-2">
-          <Section>Tendances marquantes</Section>
-          {[...up, ...down].map((c) => (
-            <Card key={c.id} className="mb-3 py-3">
-              <div className="flex items-center justify-between">
-                <div><Chip>#{c.id}</Chip><span className="font-semibold">{c.label}</span></div>
-              </div>
-              <div className="mt-1"><Trend t={c.trend} /></div>
-            </Card>
-          ))}
-        </div>
-      </div>
-
-      <Section>Signaux faibles les plus notables</Section>
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-        {topWeak.map((w, i) => (
-          <Card key={i} className="py-4">
-            <Chip>atypicité {w.score.toFixed(2)}</Chip>
-            <p className="mt-1 text-sm text-muted">{w.text.slice(0, 180)}…</p>
+      <Section>Axes stratégiques prioritaires</Section>
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+        {(rising.length ? rising : data.clusters).slice(0, 4).map((c, i) => (
+          <Card key={c.id} className="py-4">
+            <div className="flex items-center gap-3">
+              <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-accent/15 font-bold text-accent">{i + 1}</div>
+              <div className="font-semibold">{c.label.split(" · ").slice(0, 2).join(" · ")}</div>
+            </div>
+            <div className={"mt-2 text-sm font-semibold " + trendClass(c.trend)}>{c.trend}</div>
+            <div className="mt-1 text-sm text-muted">{c.synthese.slice(0, 150)}…</div>
           </Card>
         ))}
       </div>
 
-      <Section>Principales causes récurrentes</Section>
+      <Section>Tableau de synthèse — causes récurrentes</Section>
       <Card className="overflow-x-auto p-0">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-line text-left text-muted">
               {["#", "Thème", "Rapports", "% corpus", "Anomalie dominante", "Tendance"].map((h) => (
-                <th key={h} className="px-4 py-3 font-semibold">{h}</th>
-              ))}
+                <th key={h} className="px-4 py-3 font-semibold">{h}</th>))}
             </tr>
           </thead>
           <tbody>
             {data.causes.slice(0, 15).map((c) => (
-              <tr key={c.cluster} className="border-b border-line/50 hover:bg-white/[.03]">
-                <td className="px-4 py-2.5 text-muted">{c.cluster}</td>
-                <td className="px-4 py-2.5 font-medium">{c.label}</td>
-                <td className="px-4 py-2.5">{fmt(c.nb_rapports)}</td>
-                <td className="px-4 py-2.5">{c["part_%"]}%</td>
-                <td className="px-4 py-2.5 text-muted">{String(c.anomalie_dominante).slice(0, 40)}</td>
-                <td className={"px-4 py-2.5 " + trendClass(c.tendance)}>{c.tendance}</td>
+              <tr key={c.cluster} className="border-b border-line/50">
+                <td className="px-4 py-2 text-muted">{c.cluster}</td>
+                <td className="px-4 py-2 font-medium">{c.label}</td>
+                <td className="px-4 py-2">{fmt(c.nb_rapports)}</td>
+                <td className="px-4 py-2">{c["part_%"]}%</td>
+                <td className="px-4 py-2 text-muted">{String(c.anomalie_dominante).slice(0, 40)}</td>
+                <td className={"px-4 py-2 " + trendClass(c.tendance)}>{c.tendance}</td>
               </tr>
             ))}
           </tbody>
@@ -103,8 +87,3 @@ export default function ExecutiveIntelligence() {
     </div>
   );
 }
-
-const tooltipStyle = {
-  background: "#0F1B2E", border: "1px solid #22344c", borderRadius: 10,
-  color: "#E6EDF6", fontSize: 12,
-};

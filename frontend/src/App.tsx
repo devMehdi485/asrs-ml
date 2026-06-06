@@ -2,12 +2,12 @@ import { Routes, Route } from "react-router-dom";
 import Layout from "./components/Layout";
 import { Skeleton } from "./components/ui";
 import { useData } from "./context";
-import ExecutiveIntelligence from "./pages/ExecutiveIntelligence";
-import OperationalDashboard from "./pages/OperationalDashboard";
+import Dashboard from "./pages/Dashboard";
 import ClusterExplorer from "./pages/ClusterExplorer";
 import ThematicAnalysis from "./pages/ThematicAnalysis";
-import TemporalHeatmap from "./pages/TemporalHeatmap";
+import TemporalMap from "./pages/TemporalMap";
 import WeakSignals from "./pages/WeakSignals";
+import ExecutiveIntelligence from "./pages/ExecutiveIntelligence";
 
 export default function App() {
   const { data, error } = useData();
@@ -29,26 +29,22 @@ export default function App() {
     return (
       <div className="min-h-screen p-8">
         <Skeleton className="mb-7 h-16 w-80" />
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-5">
-          {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-28" />)}
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-28" />)}
         </div>
-        <div className="mt-6 grid grid-cols-1 gap-5 lg:grid-cols-5">
-          <Skeleton className="h-80 lg:col-span-3" />
-          <Skeleton className="h-80 lg:col-span-2" />
-        </div>
-        <div className="mt-6 text-sm text-muted">Chargement des données ASRS…</div>
+        <div className="mt-6"><Skeleton className="h-80" /></div>
       </div>
     );
 
   return (
     <Routes>
       <Route element={<Layout />}>
-        <Route index element={<ExecutiveIntelligence />} />
-        <Route path="operational" element={<OperationalDashboard />} />
+        <Route index element={<Dashboard />} />
         <Route path="clusters" element={<ClusterExplorer />} />
         <Route path="thematic" element={<ThematicAnalysis />} />
-        <Route path="temporal" element={<TemporalHeatmap />} />
+        <Route path="temporal" element={<TemporalMap />} />
         <Route path="weak" element={<WeakSignals />} />
+        <Route path="executive" element={<ExecutiveIntelligence />} />
       </Route>
     </Routes>
   );

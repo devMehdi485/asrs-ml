@@ -1,3 +1,4 @@
+import { ChevronRight } from "lucide-react";
 import { useData } from "../context";
 import { Kpi, Card, Section, PageHeader, Chip } from "../components/ui";
 import { fmt, trendClass } from "../lib";
@@ -6,23 +7,49 @@ export default function ThematicAnalysis() {
   const { data } = useData()!;
   if (!data) return null;
   const clf = data.classification;
+  const maxSize = Math.max(...data.clusters.map((c) => c.size));
+  const themes = data.clusters.slice(0, 12);
 
   return (
     <div>
       <PageHeader title="Thematic Analysis"
-        subtitle="Cartographie thématique, modélisation LDA et causes récurrentes" />
+        subtitle={`${data.meta.n_themes} thèmes dominants identifiés sur l'ensemble des rapports`} />
 
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-        <Kpi label="Thèmes" value={data.meta.n_themes} icon="🗂️" accent />
-        <Kpi label="Modèle" value={data.meta.model} icon="🧠" />
-        <Kpi label="Cohérence LDA c_v" value={data.lda.coherence ?? "—"} icon="📐" accent />
-        <Kpi label="Plus gros thème" value={`${data.causes[0]?.["part_%"]}%`} icon="🥇" />
+        <Kpi label="Thèmes" value={data.meta.n_themes} icon="🗂️" />
+        <Kpi label="Modèle" value={data.meta.model} icon="🧠" tint="accent" />
+        <Kpi label="Cohérence LDA c_v" value={data.lda.coherence ?? "—"} icon="📐" tint="up" />
+        <Kpi label="Plus gros thème" value={`${data.causes[0]?.["part_%"]}%`} icon="🥇" tint="warn" />
       </div>
 
-      <Card className="mt-5">
-        <div className="text-sm font-semibold">Justification du modèle retenu</div>
-        <p className="mt-1 text-sm text-muted">{data.meta.justification}</p>
-      </Card>
+      <Section>Thèmes dominants</Section>
+      <div className="flex flex-col gap-3">
+        {themes.map((c) => {
+          const imp = Math.round((c.size / maxSize) * 100);
+          return (
+            <Card key={c.id} className="py-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-baseline gap-3">
+                  <span className="text-lg font-bold">{c.label.split(" · ").slice(0, 2).join(" · ")}</span>
+                  <span className="text-sm text-muted">{fmt(c.size)} rapports</span>
+                </div>
+                <ChevronRight size={18} className="text-muted" />
+              </div>
+              <div className="mt-3 flex items-center gap-3">
+                <span className="text-[0.7rem] font-semibold uppercase tracking-wider text-muted">Importance</span>
+                <div className="h-2 flex-1 overflow-hidden rounded-full bg-line">
+                  <div className="h-full rounded-full bg-gradient-to-r from-accent2 to-accent" style={{ width: `${imp}%` }} />
+                </div>
+                <span className="w-10 text-right text-sm font-bold">{imp}%</span>
+                <span className={"w-44 text-right text-xs font-semibold " + trendClass(c.trend)}>{c.trend}</span>
+              </div>
+              <div className="mt-3 flex flex-wrap">
+                {c.terms.slice(0, 6).map((t) => <Chip key={t}>{t}</Chip>)}
+              </div>
+            </Card>
+          );
+        })}
+      </div>
 
       {clf?.models?.length > 0 && (
         <>
@@ -31,7 +58,7 @@ export default function ThematicAnalysis() {
             {clf.models.map((mdl) => (
               <Card key={mdl.name}>
                 <div className="font-semibold">{mdl.name}</div>
-                <div className="mt-2 flex gap-6">
+                <div className="mt-2 flex gap-8">
                   <div><div className="text-2xl font-extrabold text-accent">{mdl.f1_macro}</div>
                     <div className="text-xs text-muted">F1 macro</div></div>
                   <div><div className="text-2xl font-extrabold text-accent">{mdl.f1_weighted}</div>
@@ -48,37 +75,12 @@ export default function ThematicAnalysis() {
         </>
       )}
 
-      <Section>Mots-clés saillants par thème (top 16)</Section>
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-        {data.clusters.slice(0, 16).map((c) => (
-          <Card key={c.id} className="py-4">
-            <div className="mb-2"><Chip>#{c.id}</Chip>
-              <span className="text-sm font-semibold">{fmt(c.size)} rapports</span></div>
-            <div className="flex flex-wrap">{c.terms.slice(0, 7).map((t) => <Chip key={t}>{t}</Chip>)}</div>
-          </Card>
-        ))}
-      </div>
-
-      {data.lda.topics?.length > 0 && (
-        <>
-          <Section>Thèmes LDA (top mots)</Section>
-          <Card className="space-y-1.5">
-            {data.lda.topics.map((t, i) => (
-              <div key={i} className="text-sm">
-                <span className="text-accent font-semibold">Thème {i}</span>
-                <span className="text-muted"> — {t}</span>
-              </div>
-            ))}
-          </Card>
-        </>
-      )}
-
       {data.lda_vis_html && (
         <>
-          <Section>Visualisation interactive (pyLDAvis)</Section>
-          <Card className="p-0 overflow-hidden">
-            <iframe src={`${import.meta.env.BASE_URL}data/lda_vis.html`}
-              title="pyLDAvis" className="w-full" style={{ height: 820, border: 0, background: "#fff" }} />
+          <Section>Visualisation interactive des thèmes LDA (pyLDAvis)</Section>
+          <Card className="overflow-hidden p-0">
+            <iframe src={`${import.meta.env.BASE_URL}data/lda_vis.html`} title="pyLDAvis"
+              className="w-full" style={{ height: 820, border: 0, background: "#fff" }} />
           </Card>
         </>
       )}

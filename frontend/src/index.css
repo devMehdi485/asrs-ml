@@ -15,11 +15,11 @@ body,
 body {
   margin: 0;
   font-family: "Inter", sans-serif;
-  color: #e6edf6;
+  color: #f1f5fb;
   background:
-    radial-gradient(900px 500px at 85% -5%, rgba(34, 211, 238, 0.1), transparent 60%),
-    radial-gradient(800px 500px at 0% 0%, rgba(59, 130, 246, 0.1), transparent 55%),
-    #0b1120;
+    radial-gradient(900px 500px at 85% -5%, rgba(59, 130, 246, 0.12), transparent 60%),
+    radial-gradient(800px 500px at 0% 0%, rgba(37, 99, 235, 0.1), transparent 55%),
+    #0a0f1c;
   background-attachment: fixed;
 }
 
@@ -58,7 +58,7 @@ body {
 .skeleton {
   position: relative;
   overflow: hidden;
-  background: #16243b;
+  background: #16223a;
   border-radius: 14px;
 }
 .skeleton::after {

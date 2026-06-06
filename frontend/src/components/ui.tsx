@@ -1,24 +1,33 @@
 import React from "react";
 import { trendClass } from "../lib";
 
-export function Kpi({ label, value, icon, accent }: {
-  label: string; value: React.ReactNode; icon?: React.ReactNode; accent?: boolean;
+const TINT: Record<string, string> = {
+  accent: "bg-accent/12 text-accent",
+  up: "bg-up/12 text-up",
+  down: "bg-down/12 text-down",
+  warn: "bg-warn/12 text-warn",
+};
+
+export function Kpi({ label, value, icon, delta, deltaUp, tint = "accent" }: {
+  label: string; value: React.ReactNode; icon?: React.ReactNode;
+  delta?: string; deltaUp?: boolean; tint?: keyof typeof TINT;
 }) {
   return (
-    <div className="group relative overflow-hidden rounded-2xl border border-line
-      bg-gradient-to-br from-surface2 to-surface p-4 shadow-card transition duration-200
-      hover:-translate-y-0.5 hover:border-accent/40 hover:shadow-glow">
-      <div className="absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-accent to-accent2 opacity-70" />
-      <span className="grid h-9 w-9 place-items-center rounded-xl bg-accent/10 text-base text-accent">
-        {icon}
-      </span>
-      <div className="mt-3 text-[0.7rem] uppercase tracking-wider text-muted">{label}</div>
-      <div className={"mt-0.5 text-2xl font-extrabold " +
-        (accent
-          ? "bg-gradient-to-br from-ink to-accent bg-clip-text text-transparent"
-          : "text-ink")}>
-        {value}
+    <div className="rounded-2xl border border-line bg-surface p-5 shadow-card transition duration-200 hover:-translate-y-0.5 hover:border-accent/40">
+      <div className="flex items-start justify-between">
+        <div className="text-sm font-medium text-muted">{label}</div>
+        {icon && (
+          <span className={"grid h-10 w-10 place-items-center rounded-xl " + TINT[tint]}>
+            {icon}
+          </span>
+        )}
       </div>
+      <div className="mt-3 text-3xl font-extrabold tracking-tight text-ink">{value}</div>
+      {delta && (
+        <div className={"mt-1 text-sm font-semibold " + (deltaUp ? "text-up" : "text-down")}>
+          {delta}
+        </div>
+      )}
     </div>
   );
 }
@@ -35,11 +44,10 @@ export function PageHeader({ title, subtitle, right }: {
   title: string; subtitle: string; right?: React.ReactNode;
 }) {
   return (
-    <div className="mb-7 flex items-end justify-between gap-4 border-b border-line pb-5">
+    <div className="mb-7 flex flex-wrap items-start justify-between gap-4">
       <div>
-        <div className="eyebrow">AeroInsight AI</div>
-        <h1 className="mt-1 text-2xl font-extrabold tracking-tight">{title}</h1>
-        <p className="mt-1 text-sm text-muted">{subtitle}</p>
+        <h1 className="text-4xl font-extrabold tracking-tight">{title}</h1>
+        <p className="mt-1.5 text-[0.95rem] text-muted">{subtitle}</p>
       </div>
       {right && <div className="shrink-0">{right}</div>}
     </div>
