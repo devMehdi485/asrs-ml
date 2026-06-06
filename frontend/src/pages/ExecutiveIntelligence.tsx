@@ -33,10 +33,10 @@ export default function ExecutiveIntelligence() {
             d'incidents distincts.
           </p>
           <p>
-            Le thème prédominant est <b className="text-ink">« {top?.label} »</b> ({top?.["part_%"]}% du corpus,
+            Le thème prédominant est <b className="text-ink">« {(top as any)?.name || top?.label} »</b> ({top?.["part_%"]}% du corpus,
             anomalie dominante : {String(top?.anomalie_dominante).slice(0, 50)}).
             {rising.length > 0 && <> <b className="text-ink">{rising.length}</b> thèmes sont en croissance récente,
-              au premier rang desquels <b className="text-ink">« {rising[0].label.split(" · ")[0]} »</b> ({rising[0].trend.replace(/[↑↓→]/g, "").trim()}).</>}
+              au premier rang desquels <b className="text-ink">« {rising[0].name} »</b> ({rising[0].trend.replace(/[↑↓→]/g, "").trim()}).</>}
           </p>
           <p>
             Le système de détection de signaux faibles a relevé <b className="text-ink">{m.n_weak}</b> rapports
@@ -53,10 +53,10 @@ export default function ExecutiveIntelligence() {
           <Card key={c.id} className="py-4">
             <div className="flex items-center gap-3">
               <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-accent/15 font-bold text-accent">{i + 1}</div>
-              <div className="font-semibold">{c.label.split(" · ").slice(0, 2).join(" · ")}</div>
+              <div className="font-semibold">{c.name}</div>
             </div>
             <div className={"mt-2 text-sm font-semibold " + trendClass(c.trend)}>{c.trend}</div>
-            <div className="mt-1 text-sm text-muted">{c.synthese.slice(0, 150)}…</div>
+            <div className="mt-1 text-sm text-muted">{c.desc}</div>
           </Card>
         ))}
       </div>
@@ -74,7 +74,7 @@ export default function ExecutiveIntelligence() {
             {data.causes.slice(0, 15).map((c) => (
               <tr key={c.cluster} className="border-b border-line/50">
                 <td className="px-4 py-2 text-muted">{c.cluster}</td>
-                <td className="px-4 py-2 font-medium">{c.label}</td>
+                <td className="px-4 py-2 font-medium">{(c as any).name || c.label}</td>
                 <td className="px-4 py-2">{fmt(c.nb_rapports)}</td>
                 <td className="px-4 py-2">{c["part_%"]}%</td>
                 <td className="px-4 py-2 text-muted">{String(c.anomalie_dominante).slice(0, 40)}</td>

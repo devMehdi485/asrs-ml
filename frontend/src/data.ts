@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 
 export interface Cluster {
-  id: number; label: string; label_nl: string; size: number; part: number;
+  id: number; name: string; category: string; desc: string;
+  label: string; label_nl: string; size: number; part: number;
   terms: string[]; synthese: string; trend: string; reps: string[];
 }
+export interface Category { category: string; size: number; n_themes: number; part: number; }
 export interface Cause {
   cluster: number; label: string; nb_rapports: number; part_: number;
   anomalie_dominante: string; phase_dominante: string; tendance: string;
@@ -17,6 +19,7 @@ export interface AsrsData {
   };
   comparison: any[];
   distributions: { anomaly: { name: string; count: number }[]; phase: { name: string; count: number }[] };
+  categories: Category[];
   causes: Cause[];
   clusters: Cluster[];
   scatter: { x: number; y: number; c: number }[];

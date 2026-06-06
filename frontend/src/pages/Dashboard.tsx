@@ -13,9 +13,10 @@ export default function Dashboard() {
   if (!data) return null;
   const m = data.meta;
   const timeline = data.temporal.periods.map((p, i) => ({ p, nb: data.temporal.volume[i] }));
-  const topClusters = data.causes.slice(0, 8).map((c) => ({
-    label: c.label.length > 30 ? c.label.slice(0, 30) + "…" : c.label, nb: c.nb_rapports, id: c.cluster,
+  const topClusters = data.causes.slice(0, 8).map((c: any) => ({
+    label: c.name.length > 34 ? c.name.slice(0, 34) + "…" : c.name, nb: c.nb_rapports, id: c.cluster,
   }));
+  const cats = data.categories.map((c, i) => ({ name: c.category, nb: c.size, i }));
 
   return (
     <div>
@@ -53,7 +54,21 @@ export default function Dashboard() {
         </ResponsiveContainer>
       </Card>
 
-      <Section>Principaux clusters d'incidents</Section>
+      <Section>Répartition par catégorie d'incident</Section>
+      <Card>
+        <ResponsiveContainer width="100%" height={300}>
+          <BarChart data={cats} layout="vertical" margin={{ left: 10, right: 20 }}>
+            <XAxis type="number" stroke={C.muted} fontSize={11} />
+            <YAxis type="category" dataKey="name" width={180} stroke={C.muted} fontSize={11} />
+            <Tooltip contentStyle={tip} cursor={{ fill: "rgba(255,255,255,.04)" }} />
+            <Bar dataKey="nb" radius={[0, 6, 6, 0]}>
+              {cats.map((d) => <Cell key={d.i} fill={colorFor(d.i)} />)}
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+      </Card>
+
+      <Section>Principaux thèmes d'incidents</Section>
       <Card>
         <ResponsiveContainer width="100%" height={300}>
           <BarChart data={topClusters} layout="vertical" margin={{ left: 10, right: 20 }}>

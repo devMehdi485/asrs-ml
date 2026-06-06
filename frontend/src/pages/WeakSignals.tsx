@@ -14,7 +14,7 @@ export default function WeakSignals() {
   const [seuil, setSeuil] = useState(0.6);
   const hist = data!.atyp_hist.centers.map((c, i) => ({ c, n: data!.atyp_hist.counts[i] }));
   const rows = data!.weak_signals.filter((w) => w.score >= seuil);
-  const labelOf = (id: number) => data!.clusters.find((c) => c.id === id)?.label ?? `#${id}`;
+  const labelOf = (id: number) => data!.clusters.find((c) => c.id === id)?.name ?? `#${id}`;
 
   const critical = data!.weak_signals.filter((w) => w.score >= 0.85).length;
   const avgConf = rows.length ? Math.round(100 * rows.reduce((a, w) => a + w.score, 0) / rows.length) : 0;

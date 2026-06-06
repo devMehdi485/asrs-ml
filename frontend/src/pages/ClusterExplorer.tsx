@@ -62,7 +62,7 @@ export default function ClusterExplorer() {
               (c.id === sel ? "border-accent/60 shadow-glow" : "border-line hover:border-accent/30")}>
             <span className="flex items-center gap-2.5 truncate">
               <span className="h-3 w-3 shrink-0 rounded-full" style={{ background: colorFor(c.id) }} />
-              <span className="truncate text-sm font-semibold">{c.label.split(" · ").slice(0, 2).join(" · ")}</span>
+              <span className="truncate text-sm font-semibold">{c.name}</span>
             </span>
             <span className="ml-2 shrink-0 text-sm text-muted">({fmt(c.size)})</span>
           </button>
@@ -72,10 +72,12 @@ export default function ClusterExplorer() {
       <Section>Détail du thème</Section>
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
         <Card>
-          <div className="mb-2 flex items-center gap-2">
+          <div className="mb-1 flex items-center gap-2">
             <span className="h-3 w-3 rounded-full" style={{ background: colorFor(sel) }} />
-            <span className="font-bold">#{sel} · {cluster.label}</span>
+            <span className="font-bold">{cluster.name}</span>
+            <span className="chip ml-1">{cluster.category}</span>
           </div>
+          <p className="mb-3 text-sm text-muted">{cluster.desc}</p>
           <div className="flex flex-wrap">
             {cluster.terms.map((t, i) => (
               <span key={t} className="mr-2 mb-2 rounded-full border border-accent/30 bg-accent/10 px-3 py-1 font-semibold text-accent"

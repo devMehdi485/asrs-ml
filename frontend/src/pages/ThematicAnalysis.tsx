@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { ChevronRight } from "lucide-react";
 import { useData } from "../context";
 import { Kpi, Card, Section, PageHeader, Chip } from "../components/ui";
@@ -5,6 +6,7 @@ import { fmt, trendClass } from "../lib";
 
 export default function ThematicAnalysis() {
   const { data } = useData()!;
+  const [showLda, setShowLda] = useState(false);
   if (!data) return null;
   const clf = data.classification;
   const maxSize = Math.max(...data.clusters.map((c) => c.size));
@@ -28,12 +30,18 @@ export default function ThematicAnalysis() {
           const imp = Math.round((c.size / maxSize) * 100);
           return (
             <Card key={c.id} className="py-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-baseline gap-3">
-                  <span className="text-lg font-bold">{c.label.split(" · ").slice(0, 2).join(" · ")}</span>
-                  <span className="text-sm text-muted">{fmt(c.size)} rapports</span>
+              <div className="flex items-start justify-between">
+                <div>
+                  <div className="flex items-baseline gap-3">
+                    <span className="text-lg font-bold">{c.name}</span>
+                    <span className="text-sm text-muted">{fmt(c.size)} rapports · {c.part}%</span>
+                  </div>
+                  <div className="mt-0.5 flex items-center gap-2">
+                    <span className="chip">{c.category}</span>
+                    <span className="text-sm text-muted">{c.desc}</span>
+                  </div>
                 </div>
-                <ChevronRight size={18} className="text-muted" />
+                <ChevronRight size={18} className="mt-1 shrink-0 text-muted" />
               </div>
               <div className="mt-3 flex items-center gap-3">
                 <span className="text-[0.7rem] font-semibold uppercase tracking-wider text-muted">Importance</span>
@@ -78,10 +86,20 @@ export default function ThematicAnalysis() {
       {data.lda_vis_html && (
         <>
           <Section>Visualisation interactive des thèmes LDA (pyLDAvis)</Section>
-          <Card className="overflow-hidden p-0">
-            <iframe src={`${import.meta.env.BASE_URL}data/lda_vis.html`} title="pyLDAvis"
-              className="w-full" style={{ height: 820, border: 0, background: "#fff" }} />
-          </Card>
+          {showLda ? (
+            <Card className="overflow-hidden p-0">
+              <iframe src={`${import.meta.env.BASE_URL}data/lda_vis.html`} title="pyLDAvis"
+                className="w-full" style={{ height: 820, border: 0, background: "#fff" }} />
+            </Card>
+          ) : (
+            <Card className="flex items-center justify-between">
+              <span className="text-sm text-muted">Visualisation interactive (D3) — chargement à la demande.</span>
+              <button onClick={() => setShowLda(true)}
+                className="rounded-lg bg-gradient-to-r from-accent2 to-accent px-4 py-2 text-sm font-semibold text-white shadow-glow">
+                Charger la visualisation
+              </button>
+            </Card>
+          )}
         </>
       )}
 
@@ -98,7 +116,7 @@ export default function ThematicAnalysis() {
             {data.causes.map((c) => (
               <tr key={c.cluster} className="border-b border-line/50 hover:bg-white/[.03]">
                 <td className="px-4 py-2 text-muted">{c.cluster}</td>
-                <td className="px-4 py-2 font-medium">{c.label}</td>
+                <td className="px-4 py-2 font-medium">{(c as any).name || c.label}</td>
                 <td className="px-4 py-2">{fmt(c.nb_rapports)}</td>
                 <td className="px-4 py-2">{c["part_%"]}%</td>
                 <td className="px-4 py-2 text-muted">{String(c.anomalie_dominante).slice(0, 38)}</td>

@@ -36,17 +36,37 @@ total = int((df["cluster"] != -1).sum())
 
 def clabel(c): return LABELS.get(c, {}).get("label_court", f"Cluster {c}")
 
+# Labels humains rédigés (nom + catégorie + description) — couche d'interprétation
+HUMAN = {}
+_hp = os.path.join(ROOT, "notebooks_assets", "cluster_labels_fr.json")
+if os.path.exists(_hp):
+    HUMAN = {int(k): v for k, v in json.load(open(_hp, encoding="utf-8")).items()}
+
+def hname(c): return HUMAN.get(c, {}).get("name") or clabel(c)
+def hcat(c): return HUMAN.get(c, {}).get("category", "Autres")
+def hdesc(c): return HUMAN.get(c, {}).get("desc", "")
+
 
 # ---- clusters ----
 clusters = []
 for c in sizes.index:
     clusters.append({
-        "id": int(c), "label": clabel(c),
-        "label_nl": LABELS.get(c, {}).get("label_nl", ""),
+        "id": int(c), "name": hname(c), "category": hcat(c), "desc": hdesc(c),
+        "label": clabel(c), "label_nl": LABELS.get(c, {}).get("label_nl", ""),
         "size": int(sizes[c]), "part": round(100 * sizes[c] / total, 2),
         "terms": TERMS.get(c, [])[:12], "synthese": SYN.get(c, ""),
         "trend": TRENDS.get(c, "n/d"), "reps": REPS.get(c, [])[:3],
     })
+
+# ---- agrégation par catégorie ----
+cat_agg = {}
+for c in sizes.index:
+    k = hcat(c)
+    a = cat_agg.setdefault(k, {"category": k, "size": 0, "n_themes": 0})
+    a["size"] += int(sizes[c]); a["n_themes"] += 1
+categories = sorted(cat_agg.values(), key=lambda d: d["size"], reverse=True)
+for d in categories:
+    d["part"] = round(100 * d["size"] / total, 1)
 
 # ---- scatter (échantillon) ----
 dv = df[(df["cluster"] != -1) & df["x"].notna()]
@@ -148,7 +168,9 @@ payload = {
     },
     "comparison": art.get("comparaison", []),
     "distributions": distributions,
-    "causes": causes.to_dict(orient="records"),
+    "categories": categories,
+    "causes": [{**r, "name": hname(int(r["cluster"])), "category": hcat(int(r["cluster"]))}
+               for r in causes.to_dict(orient="records")],
     "clusters": clusters,
     "scatter": scatter,
     "temporal": {"periods": months, "volume": volume, "peaks": peaks,
