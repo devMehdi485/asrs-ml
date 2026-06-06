@@ -1,6 +1,6 @@
 import { Download } from "lucide-react";
 import { useData } from "../context";
-import { Card, Section, PageHeader } from "../components/ui";
+import { Card, Section, PageHeader, Intro } from "../components/ui";
 import { fmt, trendClass } from "../lib";
 
 export default function ExecutiveIntelligence() {
@@ -22,6 +22,12 @@ export default function ExecutiveIntelligence() {
             <Download size={16} /> Exporter le rapport
           </button>
         } />
+
+      <Intro>
+        Cette page est le <b className="text-ink">résumé pour décideurs</b> : un texte de synthèse
+        généré automatiquement à partir de toutes les analyses, suivi des priorités et d'un tableau
+        récapitulatif. Idéal pour comprendre l'essentiel en une minute (bouton « Exporter » pour le PDF).
+      </Intro>
 
       <Card>
         <h2 className="text-xl font-bold">Synthèse exécutive</h2>

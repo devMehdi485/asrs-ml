@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { ChevronRight } from "lucide-react";
 import { useData } from "../context";
-import { Kpi, Card, Section, PageHeader, Chip } from "../components/ui";
+import { Kpi, Card, Section, PageHeader, Chip, Intro, Explain } from "../components/ui";
 import { fmt, trendClass } from "../lib";
 
 export default function ThematicAnalysis() {
@@ -17,6 +17,13 @@ export default function ThematicAnalysis() {
       <PageHeader title="Thematic Analysis"
         subtitle={`${data.meta.n_themes} thèmes dominants identifiés sur l'ensemble des rapports`} />
 
+      <Intro>
+        Un <b className="text-ink">thème</b> = un groupe de récits qui parlent de la même chose
+        (ex. « train d'atterrissage »), découvert automatiquement. Plus bas, la
+        <b className="text-ink"> classification</b> est un modèle qui devine le type d'un incident
+        à partir de son texte ; le <b className="text-ink">LDA</b> est une 2ᵉ méthode de thèmes.
+      </Intro>
+
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
         <Kpi label="Thèmes" value={data.meta.n_themes} icon="🗂️" />
         <Kpi label="Modèle" value={data.meta.model} icon="🧠" tint="accent" />
@@ -25,7 +32,10 @@ export default function ThematicAnalysis() {
       </div>
 
       <Section>Thèmes dominants</Section>
-      <div className="flex flex-col gap-3">
+      <Explain>la barre <b>« importance »</b> = la taille du thème (sa part dans le total).
+        La mention colorée indique s'il est en <span className="text-up">hausse</span> ou en
+        <span className="text-down"> baisse</span> récente. Les puces bleues sont ses mots-clés.</Explain>
+      <div className="mt-3 flex flex-col gap-3">
         {themes.map((c) => {
           const imp = Math.round((c.size / maxSize) * 100);
           return (
@@ -62,7 +72,10 @@ export default function ThematicAnalysis() {
       {clf?.models?.length > 0 && (
         <>
           <Section>Classification supervisée du type d'incident</Section>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <Explain>un modèle apprend à <b>deviner le type d'incident</b> à partir du texte.
+            Le <b>F1</b> est une note de précision entre 0 et 1 (1 = parfait) ; ici jusqu'à
+            <b> 0,61</b>, ce qui est correct pour 8 catégories et des récits libres.</Explain>
+          <div className="mt-3 grid grid-cols-1 gap-4 md:grid-cols-2">
             {clf.models.map((mdl) => (
               <Card key={mdl.name}>
                 <div className="font-semibold">{mdl.name}</div>

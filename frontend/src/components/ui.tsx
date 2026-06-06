@@ -65,3 +65,31 @@ export function Chip({ children }: { children: React.ReactNode }) {
 export function Skeleton({ className = "" }: { className?: string }) {
   return <div className={"skeleton " + className} />;
 }
+
+// Bloc « comment lire » — explication en langage simple sous un graphe
+export function Explain({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="mt-2 flex items-start gap-2 rounded-lg border border-line bg-white/[.02] px-3 py-2 text-[0.82rem] text-muted">
+      <span className="mt-[1px] font-bold text-accent">📖</span>
+      <span><span className="font-semibold text-ink/80">Comment lire :</span> {children}</span>
+    </div>
+  );
+}
+
+// Encadré d'insight (à retenir) — mis en avant
+export function Insight({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="mb-3 rounded-xl border-l-4 border-accent bg-accent/[.07] px-4 py-2.5 text-sm text-ink">
+      <span className="mr-1 font-bold text-accent">💡 À retenir —</span> {children}
+    </div>
+  );
+}
+
+// Bandeau d'introduction de page : « cette page répond à … »
+export function Intro({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="mb-5 rounded-xl border border-line bg-surface px-4 py-3 text-sm text-muted">
+      {children}
+    </div>
+  );
+}

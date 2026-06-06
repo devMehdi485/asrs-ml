@@ -3,7 +3,7 @@ import {
 } from "recharts";
 import { FileText, Network, Tags, AlertTriangle } from "lucide-react";
 import { useData } from "../context";
-import { Kpi, Card, Section, PageHeader } from "../components/ui";
+import { Kpi, Card, Section, PageHeader, Intro, Insight, Explain } from "../components/ui";
 import { C, colorFor, fmt } from "../lib";
 
 const tip = { background: "#111a2e", border: "1px solid #1f2c44", borderRadius: 10, color: "#F1F5FB", fontSize: 12 };
@@ -27,6 +27,20 @@ export default function Dashboard() {
             Période : {m.period ? `${m.period[0]} → ${m.period[1]}` : "—"}
           </div>
         } />
+
+      <Intro>
+        <b className="text-ink">Que montre cet outil ?</b> Une IA a lu automatiquement
+        les <b className="text-ink">{fmt(m.n_reports)}</b> récits d'incidents de la NASA
+        et les a regroupés par <b className="text-ink">thème</b> (de quoi parle le rapport),
+        sans intervention humaine. Cette page donne la vue d'ensemble ; le menu de gauche
+        permet d'explorer les thèmes, leur évolution et les cas atypiques.
+      </Intro>
+
+      <Insight>
+        La catégorie d'incidents la plus fréquente est <b>{data.categories[0].category}</b>
+        {" "}({data.categories[0].part}% des rapports), et le thème n°1 est
+        {" "}<b>« {(data.causes[0] as any).name} »</b> ({data.causes[0]["part_%"]}%).
+      </Insight>
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <Kpi label="Rapports analysés" value={fmt(m.n_reports)} icon={<FileText size={18} />} />
@@ -52,6 +66,9 @@ export default function Dashboard() {
             <Area type="monotone" dataKey="nb" stroke={C.accent} strokeWidth={2} fill="url(#g)" name="rapports" />
           </AreaChart>
         </ResponsiveContainer>
+        <Explain>chaque point = le nombre de rapports d'un mois. La courbe monte
+          quand plus d'incidents sont déclarés (la hausse récente reflète surtout
+          un plus grand nombre de rapports collectés).</Explain>
       </Card>
 
       <Section>Répartition par catégorie d'incident</Section>
@@ -66,6 +83,8 @@ export default function Dashboard() {
             </Bar>
           </BarChart>
         </ResponsiveContainer>
+        <Explain>les 81 thèmes détectés ont été regroupés en 11 grandes familles.
+          Plus la barre est longue, plus la famille pèse dans le total des incidents.</Explain>
       </Card>
 
       <Section>Principaux thèmes d'incidents</Section>
@@ -80,6 +99,8 @@ export default function Dashboard() {
             </Bar>
           </BarChart>
         </ResponsiveContainer>
+        <Explain>les thèmes individuels les plus volumineux, avec leur nom métier.
+          Cliquer dans « Cluster Explorer » permet de voir leur contenu détaillé.</Explain>
       </Card>
     </div>
   );

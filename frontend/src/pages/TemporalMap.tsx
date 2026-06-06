@@ -4,7 +4,7 @@ import {
 } from "recharts";
 import { TrendingUp, TrendingDown, Activity } from "lucide-react";
 import { useData } from "../context";
-import { Card, Section, PageHeader } from "../components/ui";
+import { Card, Section, PageHeader, Intro, Explain } from "../components/ui";
 import { C, colorFor } from "../lib";
 
 const tip = { background: "#111a2e", border: "1px solid #1f2c44", borderRadius: 10, color: "#F1F5FB", fontSize: 12 };
@@ -57,6 +57,12 @@ export default function TemporalMap() {
     <div>
       <PageHeader title="Temporal Map" subtitle="Évolution des incidents dans le temps par catégorie" />
 
+      <Intro>
+        Cette page répond à : <b className="text-ink">les incidents évoluent-ils dans le temps ?</b>
+        Les encadrés ci-dessous résument les faits marquants (pic, thème en hausse, en baisse) ;
+        les graphiques détaillent ensuite quand et quels types d'incidents surviennent.
+      </Intro>
+
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
         <Callout icon={Activity} tone="warn" title="Pic d'activité"
           text={`${t.periods[peakIdx]} : pic avec ${t.volume[peakIdx]} rapports`} />
@@ -103,6 +109,9 @@ export default function TemporalMap() {
             ))}
           </tbody>
         </table>
+        <Explain>chaque ligne = un type d'anomalie, chaque colonne = une année.
+          Plus la case est <b>vive (rouge)</b>, plus ce type d'incident a été signalé cette
+          année-là. Une ligne qui rougit vers la droite = un risque qui progresse.</Explain>
       </Card>
 
       <Section>Part de chaque thème dans le temps (top 8)</Section>
@@ -118,6 +127,8 @@ export default function TemporalMap() {
             ))}
           </AreaChart>
         </ResponsiveContainer>
+        <Explain>chaque bande colorée = la part d'un thème parmi les 8 principaux, au fil
+          du temps. Une bande qui s'épaissit = un thème qui prend de l'importance relative.</Explain>
       </Card>
     </div>
   );

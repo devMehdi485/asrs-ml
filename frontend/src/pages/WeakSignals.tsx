@@ -4,7 +4,7 @@ import {
 } from "recharts";
 import { ShieldAlert, Sparkles, Gauge } from "lucide-react";
 import { useData } from "../context";
-import { Kpi, Card, Section, PageHeader, Chip } from "../components/ui";
+import { Kpi, Card, Section, PageHeader, Chip, Intro, Explain } from "../components/ui";
 import { C, colorFor } from "../lib";
 
 const tip = { background: "#111a2e", border: "1px solid #1f2c44", borderRadius: 10, color: "#F1F5FB", fontSize: 12 };
@@ -26,6 +26,14 @@ export default function WeakSignals() {
     <div>
       <PageHeader title="Weak Signals Detection"
         subtitle={`${rows.length} incidents atypiques nécessitant attention`} />
+
+      <Intro>
+        Un <b className="text-ink">signal faible</b> = un rapport qui <b className="text-ink">ne
+        ressemble à aucun autre</b> (vocabulaire ou situation rares). Ces cas isolés peuvent
+        être les <b className="text-ink">précurseurs</b> de problèmes nouveaux (ex. drones, GPS
+        brouillé). L'IA leur attribue un <b className="text-ink">score d'atypicité</b> ; le
+        curseur ci-dessous fixe le seuil au-delà duquel on les examine.
+      </Intro>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         <Kpi label="Risque critique" value={critical} icon={<ShieldAlert size={18} />} tint="down" />
@@ -54,6 +62,8 @@ export default function WeakSignals() {
             </Bar>
           </BarChart>
         </ResponsiveContainer>
+        <Explain>la plupart des rapports sont « normaux » (gros pic à gauche). Les rares
+          rapports à <b>droite</b> du trait rouge sont les plus atypiques — ceux à examiner.</Explain>
       </Card>
 
       <Section>Rapports les plus atypiques ({rows.length})</Section>

@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { Filter, ZoomIn } from "lucide-react";
 import { useData } from "../context";
-import { Card, Section, PageHeader, Trend, Chip } from "../components/ui";
+import { Card, Section, PageHeader, Trend, Chip, Intro, Explain } from "../components/ui";
 import ScatterCanvas from "../components/ScatterCanvas";
 import { colorFor, fmt } from "../lib";
 
@@ -29,6 +29,15 @@ export default function ClusterExplorer() {
           </div>
         } />
 
+      <Intro>
+        <b className="text-ink">Cette carte = une « photo » de tous les récits.</b> Chaque
+        point est un rapport d'incident. Deux points <b className="text-ink">proches</b> =
+        deux récits qui <b className="text-ink">parlent de la même chose</b>. La
+        <b className="text-ink"> couleur</b> indique la catégorie. On voit ainsi se former des
+        « îlots » de thèmes. Clique une catégorie ci-dessous pour l'isoler, ou un thème plus bas
+        pour lire son détail.
+      </Intro>
+
       {/* Filtres par catégorie */}
       <div className="mb-4 flex flex-wrap gap-2">
         <button onClick={() => setActive(null)}
@@ -48,6 +57,9 @@ export default function ClusterExplorer() {
 
       <Card>
         <ScatterCanvas points={data!.scatter} activeIdx={activeIdx} color={colorFor} height={460} />
+        <Explain>les axes n'ont pas d'unité (c'est une projection mathématique) — seules
+          comptent la <b>proximité</b> des points et leur <b>couleur</b>. Des groupes de même
+          couleur bien séparés = des thèmes distincts et cohérents.</Explain>
       </Card>
 
       <Section>{active ? `Thèmes — ${active}` : "Thèmes principaux"}</Section>
