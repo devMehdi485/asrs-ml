@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 
 type Pt = { x: number; y: number; cat: number };
+type Lbl = { text: string; x: number; y: number };
 
-export default function ScatterCanvas({ points, activeIdx, color, height = 460 }: {
-  points: Pt[]; activeIdx: number; color: (i: number) => string; height?: number;
+export default function ScatterCanvas({ points, activeIdx, color, labels = [], height = 460 }: {
+  points: Pt[]; activeIdx: number; color: (i: number) => string; labels?: Lbl[]; height?: number;
 }) {
   const wrap = useRef<HTMLDivElement>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
@@ -52,7 +53,19 @@ export default function ScatterCanvas({ points, activeIdx, color, height = 460 }
       points.forEach((p) => draw(p, false));
     }
     ctx.globalAlpha = 1;
-  }, [points, activeIdx, w, height, color]);
+
+    // étiquettes de catégories (au centre de chaque îlot)
+    if (activeIdx < 0 && labels.length) {
+      ctx.font = "600 12px Inter, sans-serif";
+      ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      for (const l of labels) {
+        const x = sx(l.x), y = sy(l.y);
+        ctx.lineWidth = 3; ctx.strokeStyle = "rgba(10,15,28,.85)";
+        ctx.strokeText(l.text, x, y);
+        ctx.fillStyle = "#F1F5FB"; ctx.fillText(l.text, x, y);
+      }
+    }
+  }, [points, activeIdx, w, height, color, labels]);
 
   return (
     <div ref={wrap} style={{ width: "100%" }}>

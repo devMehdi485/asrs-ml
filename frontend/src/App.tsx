@@ -8,6 +8,7 @@ import ThematicAnalysis from "./pages/ThematicAnalysis";
 import TemporalMap from "./pages/TemporalMap";
 import WeakSignals from "./pages/WeakSignals";
 import ExecutiveIntelligence from "./pages/ExecutiveIntelligence";
+import Prediction from "./pages/Prediction";
 
 export default function App() {
   const { data, error } = useData();
@@ -44,6 +45,7 @@ export default function App() {
         <Route path="thematic" element={<ThematicAnalysis />} />
         <Route path="temporal" element={<TemporalMap />} />
         <Route path="weak" element={<WeakSignals />} />
+        <Route path="predict" element={<Prediction />} />
         <Route path="executive" element={<ExecutiveIntelligence />} />
       </Route>
     </Routes>

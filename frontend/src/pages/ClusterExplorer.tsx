@@ -15,6 +15,18 @@ export default function ClusterExplorer() {
   const [sel, setSel] = useState<number>(data!.clusters[0].id);
 
   const activeIdx = active ? catName.indexOf(active) : -1;
+
+  // centres de chaque catégorie -> étiquettes sur la carte
+  const labels = useMemo(() => {
+    const agg: Record<number, { sx: number; sy: number; n: number }> = {};
+    for (const p of data!.scatter) {
+      const a = (agg[p.cat] ||= { sx: 0, sy: 0, n: 0 });
+      a.sx += p.x; a.sy += p.y; a.n++;
+    }
+    return Object.entries(agg)
+      .sort((x, y) => y[1].n - x[1].n).slice(0, 8)
+      .map(([ci, a]) => ({ text: catName[+ci] || "", x: a.sx / a.n, y: a.sy / a.n }));
+  }, [data, catName]);
   const themes = active ? data!.clusters.filter((c) => c.category === active) : data!.clusters.slice(0, 12);
   const cluster = data!.clusters.find((c) => c.id === sel)!;
 
@@ -56,7 +68,7 @@ export default function ClusterExplorer() {
       </div>
 
       <Card>
-        <ScatterCanvas points={data!.scatter} activeIdx={activeIdx} color={colorFor} height={460} />
+        <ScatterCanvas points={data!.scatter} activeIdx={activeIdx} color={colorFor} labels={labels} height={460} />
         <Explain>les axes n'ont pas d'unité (c'est une projection mathématique) — seules
           comptent la <b>proximité</b> des points et leur <b>couleur</b>. Des groupes de même
           couleur bien séparés = des thèmes distincts et cohérents.</Explain>

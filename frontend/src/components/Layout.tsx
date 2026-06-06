@@ -1,6 +1,6 @@
 import { NavLink, Outlet } from "react-router-dom";
 import {
-  LayoutGrid, Network, Tags, Calendar, AlertTriangle, TrendingUp, Plane,
+  LayoutGrid, Network, Tags, Calendar, AlertTriangle, TrendingUp, Plane, Sparkles,
 } from "lucide-react";
 import { useData } from "../context";
 
@@ -10,6 +10,7 @@ const NAV = [
   { to: "/thematic", label: "Thematic Analysis", desc: "Détail & modèles", icon: Tags },
   { to: "/temporal", label: "Temporal Map", desc: "Évolution dans le temps", icon: Calendar },
   { to: "/weak", label: "Weak Signals", desc: "Cas atypiques", icon: AlertTriangle },
+  { to: "/predict", label: "Prédiction", desc: "Tester le modèle", icon: Sparkles },
   { to: "/executive", label: "Executive Intelligence", desc: "Résumé décideurs", icon: TrendingUp },
 ];
 
