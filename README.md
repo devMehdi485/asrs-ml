@@ -125,6 +125,11 @@ cd frontend && npm install && npm run dev # http://localhost:5173
 Deux dashboards sont donc disponibles : **Streamlit** (Python, rapide à lancer) et
 **React/AeroInsight AI** (web, design soigné reproduisant la maquette Figma).
 
+**4. Rapport & présentation** — dans `report/` :
+- `rapport.pdf` (rapport LaTeX, 8 pages) — compiler : `cd report && latexmk -pdf rapport.tex`
+- `presentation.pptx` (14 slides)
+- régénérer les figures + word2vec : `python report/make_assets.py` ; le deck : `python report/make_pptx.py`
+
 ---
 
 ## 🧪 Méthodologie & critères d'évaluation
