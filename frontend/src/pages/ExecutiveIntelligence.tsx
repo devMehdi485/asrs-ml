@@ -20,7 +20,13 @@ export default function ExecutiveIntelligence() {
   return (
     <div>
       <PageHeader title="Executive Intelligence"
-        subtitle="Synthèse stratégique auto-générée des risques de sécurité aérienne" />
+        subtitle="Synthèse stratégique auto-générée des risques de sécurité aérienne"
+        right={
+          <div className="flex items-center gap-2 rounded-full border border-line bg-surface px-3 py-1.5 text-xs text-muted">
+            <span className="h-2 w-2 animate-pulse rounded-full bg-up" />
+            {m.model} · {m.period ? `${m.period[0].slice(0, 4)}–${m.period[1].slice(0, 4)}` : ""}
+          </div>
+        } />
 
       <div className="grid grid-cols-2 gap-4 md:grid-cols-5">
         <Kpi label="Rapports analysés" value={fmt(m.n_reports)} icon="🛩️" accent />

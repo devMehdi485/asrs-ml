@@ -36,10 +36,10 @@ export default function Layout() {
               to={to}
               end={end}
               className={({ isActive }) =>
-                "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition " +
+                "group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition duration-200 " +
                 (isActive
-                  ? "bg-accent/15 text-accent border border-accent/30"
-                  : "text-muted hover:bg-white/5 hover:text-ink border border-transparent")
+                  ? "bg-accent/15 text-accent border border-accent/30 shadow-glow"
+                  : "text-muted hover:bg-white/5 hover:text-ink hover:translate-x-0.5 border border-transparent")
               }
             >
               <Icon size={18} />
