@@ -68,12 +68,43 @@ categories = sorted(cat_agg.values(), key=lambda d: d["size"], reverse=True)
 for d in categories:
     d["part"] = round(100 * d["size"] / total, 1)
 
-# ---- scatter (échantillon) ----
-dv = df[(df["cluster"] != -1) & df["x"].notna()]
-if len(dv) > SCATTER_N:
-    dv = dv.sample(SCATTER_N, random_state=42)
-scatter = [{"x": round(float(r.x), 3), "y": round(float(r.y), 3), "c": int(r.cluster)}
-           for r in dv.itertuples()]
+# ---- scatter (échantillon) : projection 2D recalculée + catégorie par point ----
+cat_index = {d["category"]: i for i, d in enumerate(categories)}
+emb_path = os.path.join(PROC, "embeddings.npy")
+rng0 = np.random.default_rng(42)
+# Échantillonnage ÉQUILIBRÉ : ~CAP points par thème, pour qu'aucun thème
+# dominant n'écrase la projection et que tous les thèmes soient visibles.
+CAP = 90
+parts = []
+for c in sizes.index:
+    idxc = df.index[df["cluster"] == c].to_numpy()
+    if len(idxc) > CAP:
+        idxc = rng0.choice(idxc, CAP, replace=False)
+    parts.append(idxc)
+sub = np.sort(np.concatenate(parts))
+try:
+    import umap
+    emb = np.load(emb_path)
+    reducer = umap.UMAP(n_components=2, n_neighbors=40, min_dist=0.25,
+                        metric="cosine", random_state=42)
+    xy = reducer.fit_transform(emb[sub]).astype(float)
+    # Centrage médiane + mise à l'échelle IQR + clip symétrique : la masse
+    # dense est centrée et remplit la carte de façon équilibrée (les rares
+    # points extrêmes sont ramenés sur les bords plutôt que d'étirer la vue).
+    for k in (0, 1):
+        med = float(np.median(xy[:, k]))
+        q1, q3 = np.percentile(xy[:, k], [25, 75])
+        iqr = (q3 - q1) or 1.0
+        xy[:, k] = np.clip((xy[:, k] - med) / iqr, -2.6, 2.6)
+    print(f"[export] projection 2D recalculée (UMAP) sur {len(sub)} points")
+except Exception as e:
+    print("[export] UMAP indisponible, réutilisation des coords du run:", e)
+    xy = df.loc[sub, ["x", "y"]].to_numpy()
+
+cl = df.loc[sub, "cluster"].to_numpy()
+scatter = [{"x": round(float(xy[i, 0]), 3), "y": round(float(xy[i, 1]), 3),
+            "c": int(cl[i]), "cat": cat_index.get(hcat(int(cl[i])), 0)}
+           for i in range(len(sub))]
 
 # ---- temporel ----
 dt = df.dropna(subset=["datetime"]).copy()

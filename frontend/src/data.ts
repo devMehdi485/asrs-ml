@@ -22,7 +22,7 @@ export interface AsrsData {
   categories: Category[];
   causes: Cause[];
   clusters: Cluster[];
-  scatter: { x: number; y: number; c: number }[];
+  scatter: { x: number; y: number; c: number; cat: number }[];
   temporal: {
     periods: string[]; volume: number[]; peaks: boolean[];
     heatmap: { anomalies: string[]; periods: string[]; matrix: number[][] };
@@ -40,7 +40,7 @@ export function useAsrsData() {
   const [data, setData] = useState<AsrsData | null>(null);
   const [error, setError] = useState<string | null>(null);
   useEffect(() => {
-    fetch(`${import.meta.env.BASE_URL}data/asrs.json`)
+    fetch(`${import.meta.env.BASE_URL}data/asrs.json?t=${Date.now()}`, { cache: "no-store" })
       .then((r) => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
       .then(setData)
       .catch((e) => setError(String(e)));
