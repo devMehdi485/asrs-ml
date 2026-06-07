@@ -29,12 +29,11 @@
 \renewcommand{\headrulewidth}{0.4pt}
 \captionsetup{font=small,labelfont={bf,color=nblue}}
 
-% Encadré « pourquoi ce choix »
 \newcommand{\pourquoi}[1]{%
   \par\smallskip\noindent\colorbox{boxbg}{\parbox{\dimexpr\linewidth-2\fboxsep}{%
-  \small\textbf{\color{acc}Pourquoi ce choix pour le projet ?} #1}}\par\smallskip}
+  \small\textbf{\color{acc}Plutôt qu'une autre approche.} #1}}\par\smallskip}
+\newcommand{\limite}[1]{\par\smallskip\noindent{\small\textbf{\color{nblue}Limite.} #1}\par\smallskip}
 
-% Citation de récit réel
 \newenvironment{narr}{%
   \begin{list}{}{\setlength{\leftmargin}{1.2em}\setlength{\rightmargin}{1.2em}}\item[]%
   \small\itshape\color{nblue}\guillemotleft~}{~\guillemotright\end{list}}
@@ -52,7 +51,7 @@
 \vspace{0.30cm}
 {\itshape Rapport technique — version pédagogique\par}
 \vspace{0.5cm}
-{\large\bfseries Mehdi Tidjani \quad\textbullet\quad [Étudiant 2] \quad\textbullet\quad [Étudiant 3]\par}
+{\large\bfseries TIDJANI Mehdi \quad\textbullet\quad FEUDJEU II LA GRACE \quad\textbullet\quad OUEDRAOGO Martin\par}
 \vspace{0.8cm}
 \includegraphics[width=0.90\textwidth]{scatter.png}\\[0.2cm]
 {\small\itshape Projection sémantique des 125\,763 rapports, colorée par catégorie d'incident}
@@ -76,12 +75,12 @@ Reporting System} (ASRS) de la NASA. Son objectif est de transformer une grande 
 récits écrits en texte libre en informations claires et exploitables pour la sécurité
 aérienne. La démarche enchaîne cinq grandes étapes : nettoyer les textes, les convertir en
 nombres, les regrouper par thème, identifier les sujets dominants, et enfin prédire le type
-d'incident. Le document est volontairement rédigé de façon pédagogique : chaque terme
-technique est expliqué lors de sa première apparition, et chaque choix de méthode est
-justifié. Les résultats — 81 thèmes regroupés en 11 grandes familles, une classification
-atteignant un score F1 pondéré de 0,615, et la détection de risques émergents (drones,
-brouillage GPS, batteries au lithium) — sont systématiquement reliés aux enjeux
-opérationnels de la sécurité aérienne.
+d'incident. Chaque choix de méthode est justifié au regard des \emph{caractéristiques
+propres au corpus ASRS} (texte libre, vocabulaire abrégé et hétérogène, classes
+déséquilibrées, risques émergents). Les résultats — 81 thèmes regroupés en 11 grandes
+familles, une classification atteignant un score F1 pondéré de 0,615, et la détection de
+risques émergents (drones, brouillage GPS, batteries au lithium) — sont systématiquement
+reliés aux enjeux opérationnels de la sécurité aérienne.
 
 \bigskip
 \noindent\textbf{Mots-clés :} traitement du langage, sécurité aérienne, ASRS,
@@ -106,13 +105,11 @@ des cases : elle est noyée dans des paragraphes rédigés à la main, tous diff
 volume de 125\,000 récits ne peut pas être lu, mémorisé et recoupé par un être humain.
 
 La problématique du projet est donc la suivante : \textbf{comment exploiter
-automatiquement ces récits pour en extraire les causes récurrentes d'incidents, en
-classer les types, et repérer les signaux faibles susceptibles d'annoncer de futurs
-accidents ?} Pour répondre à cette question, le projet s'appuie sur le \textbf{NLP (Natural
-Language Processing, ou traitement automatique du langage naturel)} : il s'agit de
-l'ensemble des techniques permettant à un ordinateur d'analyser et de « comprendre » du
-texte écrit en langage humain. C'est cette discipline qui va permettre de structurer,
-regrouper et hiérarchiser automatiquement le contenu des rapports.
+automatiquement ces récits pour en extraire les causes récurrentes d'incidents, en classer
+les types, et repérer les signaux faibles susceptibles d'annoncer de futurs accidents ?}
+Pour y répondre, le projet s'appuie sur le \textbf{NLP (Natural Language Processing, ou
+traitement automatique du langage naturel)} : l'ensemble des techniques permettant à un
+ordinateur d'analyser et de « comprendre » du texte écrit en langage humain.
 
 % ---------- 2 ----------
 \section{Objectifs}
@@ -127,125 +124,170 @@ regrouper et hiérarchiser automatiquement le contenu des rapports.
 \end{enumerate}
 
 % ---------- 3 ----------
-\section{Méthodologie : une chaîne de traitement en cinq temps}
+\section{Méthodologie}
 
-La méthode suit un enchaînement logique, où chaque étape prépare la suivante : on commence
-par \emph{nettoyer} le texte, puis on le \emph{transforme en nombres}, ce qui permet ensuite
-de \emph{regrouper} les rapports, d'en \emph{extraire les sujets}, et enfin de \emph{prédire}
-le type d'incident. Cette section décrit chaque étape et justifie le choix retenu.
+Le corpus ASRS impose trois contraintes qui guident tous les choix techniques de ce projet,
+et qu'il faut garder en tête : \textbf{(i)} les récits sont rédigés librement, si bien qu'un
+même événement est décrit avec des mots très variés ; \textbf{(ii)} le vocabulaire est
+truffé d'abréviations et de jargon écrits de façon inconsistante (\texttt{rwy} pour
+\emph{runway}, \texttt{eng} pour \emph{engine}) ; \textbf{(iii)} les types d'incidents sont
+très déséquilibrés et certains risques sont \emph{émergents}, donc absents au début de la
+période. La chaîne de traitement répond à ces contraintes en cinq temps : nettoyer,
+vectoriser, regrouper, modéliser les sujets, puis prédire.
 
-\subsection{Étape 1 — Préparer les données et nettoyer les textes}
-L'étude porte sur 125\,763 rapports (2002–2025). Les récits sont disponibles pour tous les
-rapports, et les informations clés sont presque toujours renseignées (type d'anomalie
-99,7\,\%, phase de vol 95,9\,\%, type d'aéronef 98,9\,\%, date 100\,\%). Les données
-proviennent de l'outil officiel de la NASA ; un jeu équivalent est aussi diffusé sur
-\textbf{Kaggle} (une plateforme publique de jeux de données et de notebooks), utilisé ici
-comme source complémentaire pour la reproductibilité et la comparaison avec d'autres
-travaux.
+\subsection{Étape 1 — Nettoyage des récits}
+\textbf{Problème ASRS.} Pour protéger l'anonymat, la NASA remplace les noms propres et les
+lieux par des marqueurs comme \texttt{ZZZ} ou \texttt{XXX}. Ces marqueurs reviennent dans la
+quasi-totalité des récits : laissés tels quels, ils deviendraient \emph{les jetons les plus
+fréquents du corpus}. S'y ajoute un vocabulaire de fond omniprésent (« aircraft »,
+« flight », « pilot ») qui ne distingue aucun incident en particulier.
 
-Les textes subissent ensuite un \textbf{nettoyage} : on enlève les marqueurs
-d'anonymisation, on met tout en minuscules, on découpe les phrases en mots, on retire les
-mots très courants sans valeur informative, et on ramène chaque mot à sa forme de base.
-\pourquoi{Le nettoyage sert simplement à réduire le « bruit » — c'est-à-dire tout ce qui
-parasite l'analyse — pour que les méthodes suivantes se concentrent sur les mots réellement
-porteurs de sens.}
+\textbf{Pourquoi un traitement minimal serait insuffisant.} Sans nettoyage, toute statistique
+de mots serait dominée par \texttt{ZZZ} et par ce jargon générique : les rapports seraient
+regroupés selon la présence de marqueurs d'anonymisation plutôt que selon la nature de
+l'incident. Le nettoyage (retrait des marqueurs, des mots vides et d'une liste de termes
+métier omniprésents, puis lemmatisation pour réunir « engine » et « engines ») élimine ce
+bruit. \textbf{Apport.} Il garantit que tout ce qui suit travaille sur le contenu réel des
+incidents. \limite{Une lemmatisation et un filtrage trop agressifs peuvent gommer des
+nuances ou des codes techniques porteurs de sens ; le réglage de la liste de termes exclus
+reste empirique.}
 
-\subsection{Étape 2 — Transformer le texte en nombres (vectorisation)}
-Un ordinateur ne manipule pas des mots mais des nombres. Il faut donc convertir chaque
-rapport en une suite de nombres : c'est la \textbf{vectorisation}. Trois représentations
-complémentaires sont utilisées.
+\subsection{Étape 2 — Vectorisation : du texte aux nombres}
+Un algorithme ne traite que des nombres. Trois représentations, complémentaires, sont
+construites — chacune répond à un besoin différent du corpus ASRS.
 
-\textbf{TF-IDF (Term Frequency – Inverse Document Frequency, soit « fréquence du terme –
-fréquence inverse de document »)} est une méthode qui attribue à chaque mot un poids
-d'autant plus élevé qu'il est fréquent dans un rapport mais rare dans l'ensemble du corpus.
-Un mot banal partout obtient un poids faible ; un mot spécifique obtient un poids fort.
-\pourquoi{TF-IDF est simple, rapide et surtout \emph{interprétable} : on peut lire
-directement quels mots caractérisent un thème. Elle sert de base à la classification et à la
-description des groupes.}
+\paragraph{TF-IDF — pour isoler les mots qui distinguent un incident.}
+\textbf{TF-IDF (Term Frequency – Inverse Document Frequency)} pondère chaque mot d'autant
+plus fort qu'il est fréquent dans un rapport mais rare dans l'ensemble du corpus.
+\textbf{Problème ASRS.} Les récits partagent un socle lexical énorme (procédures, phraséologie
+ATC, « runway », « approach »\ldots) ; ce qui distingue réellement un incident tient à
+quelques termes décisifs (« windshear », « hydraulic », « depressurization »). \textbf{Pourquoi
+un simple comptage de mots échouerait.} Un comptage brut donnerait autant de poids au socle
+commun qu'au terme discriminant ; TF-IDF écrase justement ce socle et fait ressortir le
+terme rare et informatif. \textbf{Apport.} Représentation \emph{interprétable} : on peut lire
+les mots responsables d'une décision. Elle sert de base à la classification (étape 5) et à la
+nomination des thèmes (c-TF-IDF, ci-dessous). \limite{TF-IDF ignore l'ordre des mots et la
+synonymie : \texttt{rwy} et \texttt{runway} restent deux colonnes distinctes, ce qui motive
+le recours aux embeddings.}
 
-\textbf{Word2Vec} est une méthode qui apprend, pour chaque mot, un vecteur numérique tel que
-les mots de sens proche se retrouvent proches dans l'espace. Entraînée sur le corpus, elle
-« apprend » le vocabulaire du domaine aéronautique.
-\pourquoi{Word2Vec permet de vérifier que les données et le nettoyage sont cohérents : si le
-modèle place correctement les mots proches, c'est que le signal sémantique est bien présent.}
+\paragraph{Word2Vec — pour vérifier que le corpus « se tient » sémantiquement.}
+\textbf{Word2Vec} apprend, à partir des co-occurrences, un vecteur par mot tel que les mots
+employés dans des contextes voisins se retrouvent proches. \textbf{Problème ASRS.} Le corpus
+est saturé d'abréviations écrites librement ; il faut s'assurer que \texttt{rwy} et
+\texttt{runway} renvoient bien au même concept. \textbf{Apport.} Entraîné sur le corpus
+lui-même, Word2Vec apprend la synonymie \emph{propre au domaine} et confirme la cohérence des
+données (cf. tableau~\ref{tab:w2v} : \texttt{runway}$\approx$\texttt{rwy},
+\texttt{weather}$\approx$\texttt{thunderstorm}). \limite{Word2Vec produit un vecteur \emph{par
+mot} et ne représente pas le sens d'un récit entier ; il ne résout donc pas la comparaison de
+deux rapports.}
 
-Enfin, chaque rapport entier est transformé en un \textbf{vecteur numérique appelé
-\emph{embedding}}, qui représente le \emph{sens global} du texte (et pas seulement des mots
-isolés). Deux récits décrivant la même situation avec des mots différents auront des
-embeddings proches. Ces embeddings sont produits par un \textbf{Sentence Transformer}
-(modèle de phrases, ici \texttt{all-MiniLM-L6-v2}) : un réseau de neurones pré-entraîné qui
-encode une phrase complète en un seul vecteur.
-\pourquoi{Les embeddings de phrases captent le sens d'un récit même quand le vocabulaire
-varie d'un pilote à l'autre ; ils donnent donc des regroupements bien plus cohérents que les
-seuls mots.}
+\paragraph{Embeddings de phrases — pour rapprocher deux récits qui disent la même chose.}
+Chaque rapport entier est transformé en un \textbf{vecteur numérique (embedding)} représentant
+son \emph{sens global}, calculé par un \textbf{Sentence Transformer} (modèle de phrases
+pré-entraîné, ici \texttt{all-MiniLM-L6-v2}). \textbf{Problème ASRS.} Deux pilotes décrivent
+une même situation avec un vocabulaire très différent : une approche non stabilisée peut
+s'écrire « we were high and fast on final » ou « the approach became unstabilized and we
+went around ». \textbf{Pourquoi TF-IDF ou Word2Vec ne suffisent pas ici.} TF-IDF jugerait ces
+deux récits différents car ils ne partagent presque aucun mot ; moyenner des vecteurs
+Word2Vec diluerait le sens et perdrait la structure. L'embedding de phrase, lui, les place
+\emph{proches} parce qu'il encode la situation décrite, pas les mots employés. \textbf{Apport.}
+C'est la représentation sur laquelle s'appuie le regroupement (étape 3), d'où des thèmes
+nettement plus cohérents.
+\pourquoi{TF-IDF est conservé pour sa \emph{lisibilité} (nommer et classer), mais le
+regroupement s'appuie sur les embeddings de phrases car la variabilité de formulation est la
+norme dans des rapports rédigés librement — c'est précisément le cas que les seuls mots-clés
+gèrent mal.}
+\limite{Le modèle est pré-entraîné sur de l'anglais généraliste, pas aéronautique : certaines
+finesses du domaine sont estompées (ce qui motive des embeddings spécialisés en
+perspectives) ; de plus un embedding est moins directement interprétable qu'un vecteur
+TF-IDF.}
 
-\subsection{Étape 3 — Regrouper les rapports par thème (clustering)}
-Le \textbf{clustering} (ou regroupement automatique) consiste à rassembler les rapports qui
-se ressemblent, sans étiquette préalable. Avant de regrouper, les embeddings (qui comportent
-des centaines de dimensions) sont compressés grâce à \textbf{UMAP (Uniform Manifold
-Approximation and Projection)}, une technique de \emph{réduction de dimension} : elle projette
-les vecteurs dans un espace beaucoup plus petit tout en préservant les proximités entre
-points.
-\pourquoi{UMAP réduit le bruit, accélère les calculs et rend la visualisation possible en
-2 dimensions.}
+\subsection{Étape 3 — Regroupement des rapports par thème}
+\paragraph{UMAP — pour rendre le regroupement possible.}
+\textbf{UMAP (Uniform Manifold Approximation and Projection)} est une technique de réduction
+de dimension qui compresse des vecteurs de grande taille en quelques dimensions tout en
+préservant les voisinages. \textbf{Problème ASRS.} Les embeddings ont des centaines de
+dimensions pour 125\,763 rapports ; à cette échelle, les distances deviennent presque toutes
+équivalentes (« fléau de la dimension ») et le regroupement par densité échoue.
+\textbf{Pourquoi PCA serait insuffisant.} Une réduction linéaire comme l'ACP ne préserve pas
+la structure \emph{locale} des groupes sémantiques ; UMAP, non linéaire, garde proches les
+rapports parlant du même incident. \textbf{Apport.} Elle rend HDBSCAN exploitable et fournit
+la carte 2-D. \limite{La projection déforme les distances globales et ses coordonnées ne sont
+pas interprétables en soi.}
 
-Deux algorithmes de regroupement sont \emph{comparés} sur les mêmes données :
-\begin{itemize}[leftmargin=1.4em]
-  \item \textbf{K-Means} découpe les données en un nombre $k$ de groupes fixé à l'avance, en
-  rapprochant chaque point du centre de son groupe.
-  \item \textbf{HDBSCAN (Hierarchical Density-Based Spatial Clustering of Applications with
-  Noise)} regroupe les points selon leur \emph{densité} : il découvre tout seul le nombre de
-  groupes et met de côté les points isolés en les marquant comme « bruit ».
-\end{itemize}
-\pourquoi{Comparer deux familles d'algorithmes (par partition et par densité) permet de
-choisir objectivement le meilleur sur la base de mesures chiffrées, plutôt que d'en imposer
-un arbitrairement. De plus, le « bruit » détecté par HDBSCAN servira ensuite à repérer les
-signaux faibles.}
+\paragraph{K-Means vs HDBSCAN — découvrir des thèmes de tailles très inégales.}
+\textbf{Problème ASRS.} On ignore \emph{combien} de types d'incidents existent, et le corpus
+mêle quelques thèmes massifs (équipement) à une longue traîne de thèmes rares (drones,
+brouillage GPS), plus de nombreux récits atypiques. \textbf{K-Means} impose de fixer le
+nombre de groupes $k$ à l'avance et \emph{force chaque rapport} dans un groupe, y compris les
+récits hors-sujet — ce qui dilue les thèmes. \textbf{HDBSCAN (Hierarchical Density-Based
+Spatial Clustering of Applications with Noise)} découvre le nombre de groupes à partir de la
+densité, accepte des groupes de tailles et de formes très différentes, et \emph{met de côté}
+les points isolés en les marquant comme « bruit ». \textbf{Apport.} HDBSCAN produit les
+81 thèmes et, surtout, son « bruit » devient la matière première de la détection de signaux
+faibles (étape 5). La comparaison chiffrée (tableau~\ref{tab:clust}) tranche : silhouette de
+0,590 contre 0,382 pour K-Means.
+\pourquoi{HDBSCAN est retenu plutôt que K-Means car la structure des incidents ASRS — des
+amas thématiques denses et très inégaux, plus une masse de cas atypiques — correspond
+exactement à ce que le regroupement par densité gère bien, alors que K-Means suppose des
+groupes sphériques de tailles comparables et n'a pas de notion de « cas hors thème ».}
+\limite{HDBSCAN laisse 32\,\% de bruit, produit un gros thème « équipement » hétérogène, et
+reste sensible au paramétrage (un garde-fou écarte les solutions dégénérées).}
 
-Le clustering produit des \textbf{thèmes} fins. Pour offrir une vue d'ensemble lisible, ces
-thèmes sont ensuite \textbf{regroupés à la main en 11 catégories métier} (grandes familles).
-Il faut donc distinguer deux niveaux :
-\begin{itemize}[leftmargin=1.4em,nosep]
-  \item les \textbf{thèmes d'incidents} : les 81 groupes fins issus automatiquement du
-  clustering (p.~ex. « Problèmes de train d'atterrissage ») ;
-  \item les \textbf{catégories d'incidents} : 11 macro-familles regroupant ces thèmes selon
-  une nomenclature métier proche de celle des analystes (p.~ex. « Équipement \& systèmes »).
-\end{itemize}
-Pour nommer chaque thème, on utilise le \textbf{c-TF-IDF (class-based TF-IDF)} : c'est le
-principe du TF-IDF, mais appliqué à chaque cluster pris comme un seul gros document, afin
-d'en extraire les mots les plus caractéristiques.
+\paragraph{c-TF-IDF — pour nommer chaque thème.}
+\textbf{Problème ASRS.} Une fois les thèmes formés, il faut les nommer ; or les mots les plus
+\emph{fréquents} d'un thème sont le jargon commun (« aircraft », « runway »), identiques d'un
+thème à l'autre. \textbf{c-TF-IDF (class-based TF-IDF)} applique le principe du TF-IDF en
+traitant chaque thème comme un seul gros document, afin d'extraire les mots \emph{distinctifs}
+de chaque groupe (« hydraulic, pump » pour l'un ; « drone, airspace » pour l'autre).
+\textbf{Apport.} Étiquetage automatique et lisible des 81 thèmes. \limite{Purement lexical ;
+le regroupement des thèmes en 11 catégories métier a été fait manuellement par-dessus.}
 
-\subsection{Étape 4 — Identifier les sujets dominants (LDA)}
-En complément du clustering, une modélisation \textbf{LDA (Latent Dirichlet Allocation)} est
-réalisée. Il s'agit d'une méthode qui identifie automatiquement les principaux \emph{sujets}
-abordés dans un ensemble de textes, un même rapport pouvant relever de plusieurs sujets à la
-fois.
-\pourquoi{LDA et clustering se complètent : le clustering range chaque rapport dans un seul
-groupe, tandis que LDA révèle les sujets transversaux qui traversent plusieurs rapports.
-Cela enrichit l'interprétation des thèmes.}
-La visualisation interactive de ces sujets est produite avec \textbf{pyLDAvis}, un outil qui
-affiche les sujets et leurs mots-clés de façon explorable.
+\subsection{Étape 4 — Modélisation des sujets (LDA)}
+\textbf{LDA (Latent Dirichlet Allocation)} identifie automatiquement les principaux sujets
+d'un ensemble de textes, en représentant chaque document comme un \emph{mélange} de sujets.
+\textbf{Problème ASRS.} Un même récit combine souvent plusieurs problèmes : une déviation pour
+cause météo qui entraîne un écart d'altitude puis un souci de communication ATC. \textbf{Pourquoi
+le clustering seul ne suffit pas.} Le regroupement assigne chaque rapport à \emph{un seul}
+thème et masque donc ces mélanges. \textbf{Apport.} LDA offre une lecture transversale
+complémentaire, une mesure de cohérence ($c_v$) et une exploration interactive via
+\textbf{pyLDAvis} (outil de visualisation des sujets et de leurs mots-clés). \limite{LDA
+ignore l'ordre des mots et exige de fixer le nombre de sujets ; sur ce corpus, ses sujets
+sont moins nets que les groupes obtenus par embeddings ($c_v = 0{,}57$).}
 
-\subsection{Étape 5 — Prédire le type d'incident (classification)}
-La dernière étape est \emph{supervisée} : à partir d'exemples étiquetés, un modèle apprend à
-\textbf{prédire la catégorie d'anomalie d'un rapport à partir de son texte complet} (et non
-de mots isolés : c'est l'ensemble du récit, vectorisé, qui décide). Deux modèles sont
-employés :
-\begin{itemize}[leftmargin=1.4em]
-  \item la \textbf{régression logistique (Logistic Regression)}, qui estime la probabilité
-  qu'un rapport appartienne à chaque catégorie ;
-  \item le \textbf{SVM (Support Vector Machine, machine à vecteurs de support)}, qui sépare
-  les catégories en traçant la frontière qui laisse la plus grande marge entre elles.
-\end{itemize}
-\pourquoi{Ces deux modèles sont rapides, robustes et \emph{interprétables} (on peut voir
-quels mots font pencher la décision) : des qualités plus utiles ici qu'un gain de précision
-apporté par un modèle opaque.}
+\subsection{Étape 5 — Prédire le type d'incident, et repérer l'inattendu}
+\paragraph{Régression logistique \& SVM — classer à partir du récit entier.}
+\textbf{Problème ASRS.} Peut-on retrouver la catégorie d'anomalie codée par les analystes à
+partir du seul texte ? L'intérêt opérationnel est de \emph{pré-trier automatiquement} les
+nouveaux rapports entrants. La prédiction se fait à partir du \emph{contenu textuel global}
+du rapport (vectorisé), et non de mots isolés. \textbf{Pourquoi des règles à base de mots-clés
+échoueraient.} Les catégories partagent beaucoup de vocabulaire et le texte est bruité ;
+des règles manuelles ne passent pas à l'échelle de 8 classes sur 125\,k récits. La
+\textbf{régression logistique (Logistic Regression)} estime la probabilité d'appartenance à
+chaque catégorie ; le \textbf{SVM (Support Vector Machine)} sépare les catégories en
+maximisant la marge entre elles. \textbf{Apport.} Un classifieur opérationnel (F1 pondéré de
+0,615) qui alimente même une prédiction en direct dans le dashboard.
+\pourquoi{Des modèles linéaires sur TF-IDF sont préférés à un modèle profond car les
+représentations sont creuses et de grande dimension (cas idéal pour le linéaire), parce
+qu'ils restent \emph{auditables} — on peut lire les mots décisifs, ce qui est essentiel en
+contexte de sécurité — et parce qu'un gain marginal de précision ne justifierait pas la perte
+de transparence.}
+\limite{Le champ d'anomalie est en réalité multi-étiquettes (un rapport relève souvent de
+plusieurs anomalies) ; il a été ramené à la classe principale, et le déséquilibre des classes
+pénalise les catégories rares.}
 
-Enfin, pour repérer les rapports atypiques, on utilise un \textbf{Isolation Forest (forêt
-d'isolement)} : une méthode de détection d'anomalies qui considère qu'un point facile à
-« isoler » du reste des données est, justement, anormal.
-\pourquoi{C'est exactement ce que l'on cherche pour les signaux faibles : faire remonter les
-récits qui sortent du lot.}
+\paragraph{Isolation Forest — détecter les signaux faibles.}
+\textbf{Isolation Forest (forêt d'isolement)} est une méthode de détection d'anomalies qui
+considère qu'un point facile à « isoler » du reste des données est, justement, atypique.
+\textbf{Problème ASRS.} Les risques émergents (drones, brouillage GPS, batteries au lithium)
+n'ont pas d'étiquette et étaient quasi inexistants au début de la période : on ne peut donc
+ni les lister à l'avance, ni les apprendre de façon supervisée. \textbf{Pourquoi une recherche
+par mots-clés échouerait.} On ne peut pas chercher les mots-clés d'un risque que l'on ne
+connaît pas encore. \textbf{Apport.} En travaillant sur les embeddings, l'Isolation Forest
+fait remonter les récits sémantiquement éloignés de la masse, quel que soit leur vocabulaire ;
+combinée au « bruit » d'HDBSCAN, elle révèle ces nouveaux risques. \limite{« Atypique » ne
+veut pas dire « dangereux » : certains rapports remontés sont simplement mal rédigés ; une
+relecture humaine reste nécessaire et le taux de contamination est fixé empiriquement.}
 
 % ---------- 4 ----------
 \section{Résultats}
@@ -280,15 +322,10 @@ ce qui rend la cartographie immédiatement lisible.
 \end{figure}
 
 \subsection{Quel algorithme de regroupement retenir ?}
-Pour comparer K-Means et HDBSCAN, on utilise trois mesures de qualité d'un regroupement :
-\begin{itemize}[leftmargin=1.4em,nosep]
-  \item le \textbf{score de silhouette (Silhouette Score)}, compris entre $-1$ et $1$ : plus
-  il est proche de 1, mieux les points sont regroupés ;
-  \item l'\textbf{indice de Davies-Bouldin (Davies-Bouldin Index)} : plus il est \emph{faible},
-  mieux les groupes sont séparés ;
-  \item le \textbf{score de Calinski-Harabasz (Calinski-Harabasz Score)} : rapport entre la
-  dispersion entre groupes et à l'intérieur des groupes ; plus il est élevé, mieux c'est.
-\end{itemize}
+Trois mesures évaluent la qualité d'un regroupement : le \textbf{score de silhouette}
+($-1$ à $1$, proche de 1 = points bien regroupés) ; l'\textbf{indice de Davies-Bouldin}
+(plus faible = groupes mieux séparés) ; le \textbf{score de Calinski-Harabasz} (plus élevé =
+meilleurs groupes).
 
 \begin{table}[h]\centering\small
 \caption{Comparaison des deux algorithmes de regroupement.}\label{tab:clust}
@@ -301,20 +338,15 @@ K-Means & 15 & 0,382 & 0,945 & 0\,\% & 0,133 \\
 \bottomrule
 \end{tabular}
 \end{table}
-\textbf{HDBSCAN est retenu} : sa silhouette est plus élevée (0,590 contre 0,382) et son
-indice de Davies-Bouldin plus faible, signe de groupes mieux séparés. La faible
-correspondance avec les catégories officielles d'anomalies (mesurée par la « pureté ») est
-normale : les thèmes obtenus sont plus fins que la dizaine de catégories codées par les
-analystes. Les 32\,\% de points classés « bruit » ne sont pas jetés : ils alimentent la
-détection de signaux faibles.
+\textbf{HDBSCAN est retenu} : silhouette plus élevée et Davies-Bouldin plus faible. La faible
+correspondance avec les catégories officielles (« pureté ») est normale : les thèmes obtenus
+sont plus fins que la dizaine de catégories codées par les analystes. Les 32\,\% de points
+« bruit » alimentent la détection de signaux faibles.
 
 \subsection{Vérifier que le modèle « comprend » le domaine}
-Le modèle Word2Vec apprend, sans aide, des associations pertinentes (tableau~\ref{tab:w2v}) :
-par exemple \texttt{runway} (piste) est proche de \texttt{rwy} (son abréviation) et de
-\texttt{taxiway} (voie de circulation). Cela confirme la qualité des données. De son côté, la
-qualité des sujets LDA se mesure par la \textbf{cohérence $c_v$} (un score indiquant si les
-mots d'un sujet vont bien ensemble) : elle atteint 0,57, ce qui correspond à des sujets
-lexicalement homogènes.
+Word2Vec apprend, sans aide, des associations pertinentes (tableau~\ref{tab:w2v}). La qualité
+des sujets LDA, mesurée par la \textbf{cohérence $c_v$} (un score indiquant si les mots d'un
+sujet vont bien ensemble), atteint 0,57.
 
 \begin{table}[h]\centering\small
 \caption{Word2Vec — mots les plus proches (similarité cosinus) appris sur le corpus.}\label{tab:w2v}
@@ -331,9 +363,8 @@ lexicalement homogènes.
 \end{table}
 
 \subsection{Prédire le type d'incident}
-Le score utilisé est le \textbf{F1} : une note entre 0 et 1 qui combine la précision et le
-rappel (1 = parfait). On distingue le \emph{F1 macro} (moyenne simple sur toutes les
-catégories) et le \emph{F1 pondéré} (qui tient compte de la taille des catégories).
+Le score \textbf{F1} (entre 0 et 1) combine précision et rappel ; on distingue le \emph{F1
+macro} (moyenne simple) et le \emph{F1 pondéré} (tenant compte de la taille des classes).
 
 \begin{table}[h]\centering\small
 \caption{Performance de la classification (8 catégories d'anomalies, TF-IDF).}\label{tab:clf}
@@ -346,25 +377,22 @@ SVM linéaire & 0,517 & \textbf{0,615} \\
 \bottomrule
 \end{tabular}
 \end{table}
-Avec un F1 pondéré de 0,615 sur 8 catégories et du texte entièrement libre, le résultat est
-satisfaisant. Les catégories au vocabulaire net sont les mieux reconnues (\emph{ATC Issue},
-F1\,=\,0,76 ; \emph{NMAC}, 0,69), tandis que les catégories rares restent plus difficiles.
+Les catégories au vocabulaire net sont les mieux reconnues (\emph{ATC Issue}, F1\,=\,0,76 ;
+\emph{NMAC}, 0,69), tandis que les catégories rares restent plus difficiles.
 
 % ---------- 5 ----------
 \section{Discussion : tendances et signaux faibles}
 
-Les résultats précédents donnent une photographie ; l'analyse temporelle, elle, donne le
-film. En suivant l'évolution des thèmes dans le temps (figures~\ref{fig:vol}
-et~\ref{fig:heat}), plusieurs tendances ressortent, dont l'interprétation a un intérêt
-opérationnel direct :
+Les résultats précédents donnent une photographie ; l'analyse temporelle donne le film. En
+suivant l'évolution des thèmes (figures~\ref{fig:vol} et~\ref{fig:heat}), plusieurs tendances
+ressortent, dont l'interprétation a un intérêt opérationnel direct :
 \begin{itemize}[leftmargin=1.4em]
-  \item \textbf{Incursions et erreurs au sol — en hausse.} Cette progression est cohérente
-  avec la \textbf{densification du trafic} : plus d'avions au sol, plus de croisements, donc
-  plus d'occasions d'erreur sur les voies de circulation.
-  \item \textbf{Fumées et odeurs en cabine — en hausse.} Sujet sensible, qui appelle une
-  vigilance accrue sur la qualité de l'air et les circuits de prélèvement.
-  \item \textbf{Marchandises dangereuses — en hausse.} Cohérent avec la croissance du fret,
-  avec des enjeux de conformité documentaire et de sûreté.
+  \item \textbf{Incursions et erreurs au sol — en hausse}, cohérent avec la
+  \textbf{densification du trafic} : plus d'avions au sol, plus de croisements, plus
+  d'occasions d'erreur sur les voies de circulation.
+  \item \textbf{Fumées et odeurs en cabine — en hausse}, appelant une vigilance accrue sur la
+  qualité de l'air et les circuits de prélèvement.
+  \item \textbf{Marchandises dangereuses — en hausse}, cohérent avec la croissance du fret.
 \end{itemize}
 
 \begin{figure}[h]\centering
@@ -376,40 +404,31 @@ opérationnel direct :
   \caption{Heatmap (carte de chaleur) : type d'anomalie × année.}\label{fig:heat}
 \end{figure}
 
-L'apport le plus important concerne les \textbf{signaux faibles}. La détection d'anomalies
-fait remonter des phénomènes rares mais lourds de sens : les rencontres avec des
-\textbf{drones}, le \textbf{brouillage du signal GPS} et les \textbf{batteries au lithium} —
-des sujets quasi inexistants il y a quinze ans. Un récit l'illustre :
+L'apport le plus important concerne les \textbf{signaux faibles} : la détection d'anomalies
+fait remonter des phénomènes rares mais lourds de sens (drones, brouillage GPS, batteries au
+lithium), quasi inexistants il y a quinze ans. Un récit l'illustre :
 
 \begin{narr}
 Approach control advised there was unauthorized drone use in the area\ldots I observed a
 drone pass just left of the aircraft, approximately 20 feet from our left wing.
 \end{narr}
 
-\noindent Un analyste humain, face à 125\,000 rapports, passerait à côté. Le système, lui, le
-fait remonter en tête de liste. C'est précisément la valeur d'un détecteur de signaux
-faibles : voir tôt ce qui pourrait devenir, demain, une nouvelle catégorie d'accidents.
+\noindent Un analyste humain, face à 125\,000 rapports, passerait à côté. Le système le fait
+remonter en tête de liste : c'est la valeur d'un détecteur de signaux faibles — voir tôt ce
+qui pourrait devenir, demain, une nouvelle catégorie d'accidents.
 
 % ---------- 6 ----------
 \section{Limites et perspectives}
 
-Plusieurs limites encadrent l'interprétation des résultats :
-\begin{itemize}[leftmargin=1.4em]
-  \item \textbf{Déséquilibre des classes} : certaines catégories sont bien plus fréquentes
-  que d'autres, ce qui pénalise la reconnaissance des catégories rares.
-  \item \textbf{Données anonymisées} : la suppression des lieux et identifiants fait perdre un
-  contexte parfois utile.
-  \item \textbf{Biais de déclaration} : l'ASRS étant volontaire, le corpus reflète les
-  incidents \emph{signalés}, et non l'ensemble des incidents survenus.
-\end{itemize}
-
-\noindent Plusieurs pistes permettraient d'aller plus loin. \textbf{BERTopic} — une méthode
-récente de découverte de thèmes combinant embeddings et regroupement, avec suivi temporel
-intégré — offrirait une thématisation de bout en bout. Des \textbf{embeddings spécialisés},
-ré-entraînés sur un corpus aéronautique, sépareraient mieux les thèmes techniques. Une
-\textbf{classification multi-étiquettes} (plusieurs anomalies par rapport) refléterait mieux
-la réalité. Enfin, croiser les signaux faibles avec des données externes (trafic, météo)
-ouvrirait la voie à une analyse prédictive.
+Plusieurs limites encadrent l'interprétation : le \textbf{déséquilibre des classes} (qui
+pénalise les catégories rares), les \textbf{données anonymisées} (perte de contexte), et le
+\textbf{biais de déclaration} (le corpus reflète les incidents \emph{signalés}, non
+l'ensemble des incidents). Plusieurs pistes prolongeraient le travail : \textbf{BERTopic}
+(découverte de thèmes combinant embeddings et regroupement, avec suivi temporel intégré), des
+\textbf{embeddings spécialisés} ré-entraînés sur un corpus aéronautique (pour mieux séparer le
+thème « équipement »), une \textbf{classification multi-étiquettes} (plusieurs anomalies par
+rapport), et le croisement des signaux faibles avec des données externes (trafic, météo) en
+vue d'une analyse prédictive.
 
 % ---------- 7 ----------
 \section{Conclusion}
@@ -417,14 +436,10 @@ ouvrirait la voie à une analyse prédictive.
 Le projet part d'une matière brute — 125\,763 récits illisibles à l'échelle humaine — et la
 transforme en information structurée : 81 thèmes interprétables regroupés en 11 familles, un
 modèle de classification opérationnel (F1 pondéré de 0,615), un dispositif de détection de
-signaux faibles, et deux tableaux de bord interactifs accessibles même à un public non
-spécialiste.
-
-Au-delà des chiffres, la valeur du travail tient à cette \textbf{transformation de récits
-bruts en intelligence exploitable}. En rendant visibles les causes récurrentes, les
-tendances et les risques émergents, l'approche fournit un véritable outil d'aide à la
-décision pour la sécurité aérienne — et montre, plus largement, comment le traitement
-automatique du langage peut valoriser les grandes bases de retour d'expérience.
+signaux faibles, et deux tableaux de bord interactifs. Au-delà des chiffres, la valeur du
+travail tient à cette \textbf{transformation de récits bruts en intelligence exploitable} :
+en rendant visibles les causes récurrentes, les tendances et les risques émergents,
+l'approche fournit un véritable outil d'aide à la décision pour la sécurité aérienne.
 
 \vfill
 \noindent\footnotesize\textit{Sources des données : NASA Aviation Safety Reporting System
