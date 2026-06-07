@@ -37,15 +37,17 @@
 % ---------- TITLE ----------
 \begin{titlepage}
 \centering
-\vspace*{1.4cm}
-{\small\color{acc}\textbf{AÉRONAUTIQUE \;|\; PROJET A3 \;|\; NLP · CLASSIFICATION · CLUSTERING}}\\[1.1cm]
+\vspace*{1.3cm}
+{\small\color{acc}\textbf{AÉRONAUTIQUE \;|\; PROJET A3 \;|\; NLP · CLASSIFICATION · CLUSTERING}}\\[1.0cm]
 {\color{nblue}\Huge\bfseries Analyse NLP des rapports\\[0.3cm] d'incidents de sécurité aérienne\par}
-\vspace{0.5cm}
+\vspace{0.45cm}
 {\large Extraction des causes récurrentes, classification des anomalies\\ et détection de signaux faibles sur la base \textbf{NASA ASRS}\par}
-\vspace{0.4cm}
+\vspace{0.35cm}
 {\itshape Rapport technique}\par
-\vspace{1.1cm}
-\includegraphics[width=0.94\textwidth]{scatter.png}\\[0.2cm]
+\vspace{0.5cm}
+{\large\bfseries Mehdi Tidjani \quad\textbullet\quad [Étudiant 2] \quad\textbullet\quad [Étudiant 3]\par}
+\vspace{0.8cm}
+\includegraphics[width=0.92\textwidth]{scatter.png}\\[0.2cm]
 {\small\itshape Projection sémantique des 125\,763 rapports, colorée par catégorie d'incident}
 \vfill
 \begin{tabular}{rl}
@@ -54,23 +56,30 @@
 \textbf{Livrables} & Pipeline NLP · Dashboards (Streamlit \& React) · Rapport\\
 \textbf{Dépôt} & \url{https://github.com/devMehdi485/asrs-ml}\\
 \end{tabular}
-\vspace{0.9cm}
+\vspace{0.8cm}
 \end{titlepage}
 
-% ---------- ABSTRACT ----------
+% ---------- ABSTRACT (seul sur sa page) ----------
+\thispagestyle{empty}
+\vspace*{2cm}
 \begin{abstract}
 \noindent Le présent rapport documente une chaîne complète de traitement automatique du
 langage naturel (NLP) appliquée à 125\,763 rapports d'incidents de la base \emph{Aviation
 Safety Reporting System} (ASRS) de la NASA. L'objectif est de transformer un volume massif
 de récits en texte libre en information structurée et exploitable pour la sécurité
 aérienne. La méthodologie combine un prétraitement linguistique, une vectorisation hybride
-(TF-IDF, word2vec et embeddings de phrases), un clustering thématique (comparaison K-Means /
-HDBSCAN), une modélisation de sujets (LDA) et une classification supervisée (régression
-logistique, SVM). L'analyse fait émerger 81 thèmes regroupés en 11 catégories métier,
-atteint un score F1 pondéré de 0,615 en classification, et identifie des signaux faibles
-émergents (drones, brouillage GPS, batteries au lithium). Les résultats sont interprétés au
-regard des enjeux opérationnels de la sécurité aérienne.
+(TF-IDF, word2vec et embeddings de phrases), un clustering thématique (comparaison
+K-Means / HDBSCAN), une modélisation de sujets (LDA) et une classification supervisée
+(régression logistique, SVM). L'analyse fait émerger 81 thèmes, regroupés en 11 catégories
+métier, atteint un score F1 pondéré de 0,615 en classification, et identifie des signaux
+faibles émergents (drones, brouillage GPS, batteries au lithium). Les résultats sont
+interprétés au regard des enjeux opérationnels de la sécurité aérienne.
+
+\bigskip
+\noindent\textbf{Mots-clés :} NLP, sécurité aérienne, ASRS, clustering, LDA, classification
+de texte, détection d'anomalies.
 \end{abstract}
+\newpage
 
 \tableofcontents
 \newpage
@@ -78,51 +87,29 @@ regard des enjeux opérationnels de la sécurité aérienne.
 % ---------- 1 ----------
 \section{Contexte et problématique}
 
-L'\emph{Aviation Safety Reporting System} (ASRS), administré par la NASA depuis 1976,
-constitue l'un des plus anciens et des plus vastes dispositifs de retour d'expérience en
-sécurité aérienne. Il repose sur la soumission \textbf{volontaire et confidentielle}, par
-les pilotes, contrôleurs et techniciens, du récit des incidents observés ou vécus. En
-contrepartie d'une immunité partielle, les déclarants décrivent en langage naturel les
-événements ayant compromis, ou failli compromettre, la sécurité d'un vol. La base regroupe
-ainsi plusieurs centaines de milliers de témoignages, riches en informations sur les
-défaillances latentes du système aéronautique.
+La base \emph{Aviation Safety Reporting System} (ASRS) rassemble des centaines de milliers
+de rapports d'incidents soumis volontairement par les acteurs du transport aérien. Sa
+richesse réside dans les \textbf{récits en texte libre} décrivant chaque événement ; sa
+principale difficulté tient au fait que cette information déterminante n'est pas structurée
+et qu'un volume de cette ampleur ne peut être analysé manuellement.
 
-La valeur de cette ressource est largement reconnue, mais son exploitation se heurte à une
-difficulté majeure : l'information déterminante est contenue dans des \textbf{champs
-textuels non structurés}. Un récit type illustre la nature de cette donnée :
-
-\begin{narr}
-About 40 minutes into the flight, the First Officer and I smelled a strong electrical
-smell in the cockpit\ldots there was a `haze' in the cabin air. We advised ATC and
-completed the QRH items for smoke\ldots
-\end{narr}
-
-\noindent L'analyse manuelle d'un tel volume étant impossible à l'échelle, la problématique
-abordée est la suivante : \textbf{comment exploiter automatiquement ces récits afin
-d'extraire les causes récurrentes d'incidents, d'en classifier les types et de détecter les
-signaux faibles susceptibles de précéder des accidents ?} Le traitement automatique du
-langage naturel offre un cadre adapté à cette question, en permettant de structurer,
-regrouper et hiérarchiser l'information textuelle à grande échelle.
+La problématique traitée est donc la suivante : \textbf{comment exploiter automatiquement
+ces récits afin d'extraire les causes récurrentes d'incidents, d'en classifier les types et
+de détecter les signaux faibles susceptibles de précéder des accidents ?} Le traitement
+automatique du langage naturel constitue un cadre adapté à cette question, en permettant de
+structurer, regrouper et hiérarchiser l'information textuelle à grande échelle.
 
 % ---------- 2 ----------
 \section{Objectifs}
-
-Le projet poursuit trois objectifs principaux, articulés autour des familles de techniques
-NLP attendues :
 
 \begin{enumerate}[leftmargin=1.5em]
   \item \textbf{Extraction des causes récurrentes} : faire émerger, sans supervision, les
   grands thèmes d'incidents présents dans le corpus (clustering et modélisation de sujets).
   \item \textbf{Classification des anomalies} : prédire automatiquement la catégorie
-  d'anomalie d'un rapport à partir de son seul contenu textuel (apprentissage supervisé).
+  d'anomalie d'un rapport à partir de son contenu textuel (apprentissage supervisé).
   \item \textbf{Détection de signaux faibles} : identifier les rapports atypiques décrivant
   des phénomènes rares et potentiellement précurseurs (détection d'anomalies).
 \end{enumerate}
-
-\noindent Un objectif transversal d'\textbf{interprétabilité} encadre l'ensemble : les
-résultats doivent être restitués sous une forme intelligible pour des décideurs non
-spécialistes, ce qui motive la production de tableaux de bord et la labellisation métier des
-thèmes.
 
 % ---------- 3 ----------
 \section{Méthodologie}
@@ -132,63 +119,72 @@ justification du choix méthodologique retenu.
 
 \subsection{Données et prétraitement}
 L'étude porte sur un export de \textbf{125\,763 rapports} (2002–2025). Les champs textuels
-(\emph{narratives} des rapporteurs et synopsis) sont disponibles à 100\,\%, et les
-métadonnées clés sont très majoritairement renseignées (anomalie 99,7\,\%, phase de vol
-95,9\,\%, type d'aéronef 98,9\,\%, date 100\,\%). Le format d'export présente une double
-ligne d'en-tête, traitée automatiquement par un module de chargement dédié.
+(\emph{narratives} et synopsis) sont disponibles à 100\,\%, et les métadonnées clés sont
+très majoritairement renseignées (anomalie 99,7\,\%, phase de vol 95,9\,\%, type d'aéronef
+98,9\,\%, date 100\,\%). Les données proviennent de l'outil officiel ASRS ; un jeu
+équivalent est également diffusé sur \textbf{Kaggle}, utilisé ici comme source
+complémentaire pour la reproductibilité et la comparaison avec d'autres notebooks et jeux
+de données.
 
-Le prétraitement comprend la suppression des artefacts de désidentification (jetons
-\texttt{ZZZ}, \texttt{XXX}), la mise en minuscules, la tokenisation, le retrait des
-\emph{stopwords} (anglais et liste métier aéronautique) puis la lemmatisation. Ce niveau de
-nettoyage se justifie par la sensibilité des méthodes de vectorisation à la qualité de
-l'entrée : les jetons de désidentification, omniprésents, et les termes génériques du
-domaine masqueraient le signal thématique s'ils étaient conservés.
+Un \textbf{nettoyage standard} est appliqué aux récits (suppression des artefacts de
+désidentification, mise en minuscules, tokenisation, retrait des mots vides et
+lemmatisation). Cette étape vise simplement à \textbf{réduire le bruit} afin de concentrer
+l'analyse sur les termes porteurs de sens.
 
 \subsection{Vectorisation}
 Trois représentations complémentaires sont employées, chacune répondant à un besoin
 distinct :
 \begin{itemize}[leftmargin=1.4em]
-  \item \textbf{TF-IDF} (uni et bigrammes) : représentation creuse et interprétable. Son
-  intérêt réside dans la possibilité d'identifier explicitement les termes caractéristiques
-  d'un thème ou d'une classe ; elle sert de base à la classification et à la labellisation.
+  \item \textbf{TF-IDF} (uni et bigrammes) : représentation creuse et interprétable,
+  permettant d'identifier les termes caractéristiques d'un thème ou d'une classe ; elle sert
+  de base à la classification et à la labellisation.
   \item \textbf{word2vec} entraîné sur le corpus : représentation dense capturant la
   proximité sémantique du vocabulaire spécialisé, utile pour valider la cohérence lexicale
   du domaine.
   \item \textbf{Embeddings de phrases} (\texttt{all-MiniLM-L6-v2}) : représentation
-  contextuelle encodant le sens global d'un récit. Ce choix, qui constitue une amélioration
-  par rapport aux seuls word2vec/GloVe, se justifie par la variabilité d'expression des
-  déclarants : deux récits décrivant un même événement avec des formulations différentes
-  sont rapprochés dans l'espace vectoriel, ce qui améliore sensiblement la cohérence du
-  clustering.
+  contextuelle encodant le sens global d'un récit. Ce choix se justifie par la variabilité
+  d'expression des déclarants : deux récits décrivant un même événement avec des
+  formulations différentes sont rapprochés dans l'espace vectoriel, ce qui améliore la
+  cohérence du clustering.
 \end{itemize}
 
-\subsection{Clustering thématique}
-Les embeddings de phrases sont d'abord réduits par \textbf{UMAP}, afin d'atténuer le bruit
-et de réduire le coût de calcul. Deux algorithmes de clustering sont ensuite \textbf{comparés
-sur les mêmes données} : K-Means (partitionnement en classes de tailles comparables) et
-HDBSCAN (regroupement par densité, avec gestion explicite du bruit). Cette comparaison,
-plutôt qu'un choix imposé a priori, permet une sélection objective fondée sur des métriques
-de cohérence. Une règle de décision est formalisée, assortie d'un garde-fou écartant toute
-solution dégénérée (nombre de clusters trop faible).
+\subsection{Clustering thématique et construction des catégories}
+Les embeddings de phrases sont réduits par \textbf{UMAP}, puis deux algorithmes de
+clustering sont \textbf{comparés sur les mêmes données} : K-Means et HDBSCAN. Cette
+comparaison permet une sélection objective fondée sur des métriques de cohérence, plutôt
+qu'un choix imposé a priori ; une règle de décision écarte en outre toute solution
+dégénérée (nombre de clusters trop faible).
+
+Le clustering produit des \textbf{thèmes} fins. Pour offrir une vue d'ensemble lisible, ces
+thèmes sont ensuite \textbf{regroupés en 11 catégories métier} (macro-familles). Il importe
+de distinguer ces deux niveaux de granularité :
+\begin{itemize}[leftmargin=1.4em,nosep]
+  \item les \textbf{thèmes d'incidents} sont les 81 groupes fins issus automatiquement du
+  clustering NLP (p.~ex. « Problèmes de train d'atterrissage », « Givrage en vol ») ;
+  \item les \textbf{catégories d'incidents} sont 11 macro-familles obtenues en regroupant
+  ces thèmes selon une nomenclature métier, cohérente avec les grands domaines suivis par
+  les analystes (p.~ex. « Équipement \& systèmes », « Sol \& piste »).
+\end{itemize}
 
 \subsection{Modélisation de sujets (LDA)}
-Une modélisation \textbf{LDA} (Latent Dirichlet Allocation) complète le clustering. Les deux
-approches sont complémentaires : le clustering attribue chaque récit à un groupe unique,
-tandis que LDA décompose le corpus en sujets probabilistes, un même document pouvant relever
-de plusieurs sujets. La qualité des sujets est évaluée par la \textbf{cohérence $c_v$}.
+Une modélisation \textbf{LDA} complète le clustering. Les deux approches sont
+complémentaires : le clustering attribue chaque récit à un groupe unique, tandis que LDA
+décompose le corpus en sujets probabilistes, un même document pouvant relever de plusieurs
+sujets. La qualité des sujets est évaluée par la \textbf{cohérence $c_v$}.
 
 \subsection{Classification supervisée}
 Des modèles linéaires — \textbf{régression logistique} et \textbf{SVM linéaire} — sont
-entraînés sur la représentation TF-IDF pour prédire l'anomalie principale (catégories les
-plus fréquentes). Le choix de modèles linéaires se justifie par leur robustesse, leur
-rapidité et leur interprétabilité, propriétés jugées prioritaires devant un gain marginal de
-performance qu'apporteraient des modèles moins transparents.
+entraînés sur la représentation TF-IDF afin de \textbf{prédire la catégorie d'anomalie d'un
+rapport à partir de son contenu textuel global}, et non de mots isolés : c'est l'ensemble
+du récit, vectorisé, qui détermine la prédiction. Le choix de modèles linéaires se justifie
+par leur robustesse, leur rapidité et leur interprétabilité, propriétés jugées prioritaires
+devant un gain marginal de performance qu'apporteraient des modèles moins transparents.
 
 \subsection{Détection de signaux faibles et analyse temporelle}
 La détection de signaux faibles repose sur un \textbf{Isolation Forest} appliqué aux
-représentations réduites, complété par les points classés comme bruit par HDBSCAN. L'analyse
-temporelle agrège les volumes mensuels, détecte les pics par z-score et suit l'évolution de
-la part de chaque thème dans le temps.
+représentations réduites, complété par les points classés comme bruit par HDBSCAN.
+L'analyse temporelle agrège les volumes mensuels, détecte les pics par z-score et suit
+l'évolution de la part de chaque thème dans le temps.
 
 % ---------- 4 ----------
 \section{Résultats}
@@ -201,7 +197,8 @@ sol et sur piste (13,3\,\%) et les écarts de trajectoire ou d'altitude (7,8\,\%
 
 \begin{figure}[h]\centering
   \includegraphics[width=0.82\textwidth]{categories.png}
-  \caption{Répartition des incidents par catégorie métier.}\label{fig:cat}
+  \caption{Répartition des incidents par catégorie métier (regroupement des 81 thèmes en
+  11 macro-familles).}\label{fig:cat}
 \end{figure}
 
 Cette prédominance des signalements liés à l'équipement ne traduit pas nécessairement une
@@ -237,10 +234,10 @@ K-Means & 15 & 0,382 & 0,945 & 0\,\% & 0,133 \\
 \end{table}
 Le modèle \textbf{HDBSCAN} est retenu : il présente une silhouette supérieure (0,590 contre
 0,382) et un indice de Davies-Bouldin plus faible, signe d'une meilleure séparation des
-groupes. La concordance modérée avec les catégories d'anomalies officielles
-(pureté, ARI) s'explique par la granularité supérieure des thèmes sémantiques obtenus, plus
-fins que les catégories codées par les analystes. Les points classés comme bruit (32\,\%)
-sont exploités pour la détection de signaux faibles.
+groupes. La concordance modérée avec les catégories d'anomalies officielles (pureté, ARI)
+s'explique par la granularité supérieure des thèmes sémantiques obtenus, plus fins que les
+catégories codées par les analystes. Les points classés comme bruit (32\,\%) sont exploités
+pour la détection de signaux faibles.
 
 \subsection{Validation sémantique (word2vec) et modélisation LDA}
 Le modèle word2vec entraîné sur le corpus restitue des proximités sémantiques cohérentes
@@ -368,8 +365,8 @@ aérienne, et démontre la pertinence du traitement automatique du langage natur
 valorisation des bases de retour d'expérience.
 
 \vfill
-\noindent\footnotesize\textit{Source des données : NASA Aviation Safety Reporting System
-(\url{https://asrs.arc.nasa.gov/}). Code, dashboards et reproductibilité :
-\url{https://github.com/devMehdi485/asrs-ml}.}
+\noindent\footnotesize\textit{Sources des données : NASA Aviation Safety Reporting System
+(\url{https://asrs.arc.nasa.gov/}) et jeu équivalent sur Kaggle. Code, dashboards et
+reproductibilité : \url{https://github.com/devMehdi485/asrs-ml}.}
 
 \end{document}
