@@ -54,15 +54,24 @@ export default function ScatterCanvas({ points, activeIdx, color, labels = [], h
     }
     ctx.globalAlpha = 1;
 
-    // étiquettes de catégories (au centre de chaque îlot)
+    // étiquettes de catégories (au centre de chaque îlot), avec fond et
+    // anti-chevauchement : une étiquette qui en recouvrirait une autre est omise.
     if (activeIdx < 0 && labels.length) {
       ctx.font = "600 12px Inter, sans-serif";
       ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      const drawn: { x: number; y: number; w: number; h: number }[] = [];
       for (const l of labels) {
         const x = sx(l.x), y = sy(l.y);
-        ctx.lineWidth = 3; ctx.strokeStyle = "rgba(10,15,28,.85)";
-        ctx.strokeText(l.text, x, y);
-        ctx.fillStyle = "#F1F5FB"; ctx.fillText(l.text, x, y);
+        const tw = ctx.measureText(l.text).width;
+        const r = { x: x - tw / 2 - 5, y: y - 9, w: tw + 10, h: 18 };
+        const overlap = drawn.some((d) =>
+          !(r.x > d.x + d.w || r.x + r.w < d.x || r.y > d.y + d.h || r.y + r.h < d.y));
+        if (overlap) continue;
+        drawn.push(r);
+        ctx.fillStyle = "rgba(10,15,28,.6)";
+        ctx.fillRect(r.x, r.y, r.w, r.h);
+        ctx.fillStyle = "#F1F5FB";
+        ctx.fillText(l.text, x, y);
       }
     }
   }, [points, activeIdx, w, height, color, labels]);

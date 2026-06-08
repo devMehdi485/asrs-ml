@@ -88,15 +88,17 @@ try:
     reducer = umap.UMAP(n_components=2, n_neighbors=40, min_dist=0.25,
                         metric="cosine", random_state=42)
     xy = reducer.fit_transform(emb[sub]).astype(float)
-    # Centrage médiane + mise à l'échelle IQR + clip symétrique : la masse
-    # dense est centrée et remplit la carte de façon équilibrée (les rares
-    # points extrêmes sont ramenés sur les bords plutôt que d'étirer la vue).
+    # Centrage médiane + mise à l'échelle IQR : la masse dense est centrée.
     for k in (0, 1):
         med = float(np.median(xy[:, k]))
         q1, q3 = np.percentile(xy[:, k], [25, 75])
         iqr = (q3 - q1) or 1.0
-        xy[:, k] = np.clip((xy[:, k] - med) / iqr, -2.6, 2.6)
-    print(f"[export] projection 2D recalculée (UMAP) sur {len(sub)} points")
+        xy[:, k] = (xy[:, k] - med) / iqr
+    # On ÉCARTE les rares points extrêmes (au lieu de les rabattre sur le bord,
+    # ce qui créait des points isolés parasites) -> carte propre et centrée.
+    keep = (np.abs(xy[:, 0]) <= 2.6) & (np.abs(xy[:, 1]) <= 2.6)
+    xy, sub = xy[keep], sub[keep]
+    print(f"[export] projection 2D recalculée (UMAP), {len(sub)} points conservés")
 except Exception as e:
     print("[export] UMAP indisponible, réutilisation des coords du run:", e)
     xy = df.loc[sub, ["x", "y"]].to_numpy()

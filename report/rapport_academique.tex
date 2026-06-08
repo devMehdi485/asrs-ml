@@ -1,9 +1,11 @@
 \documentclass[11pt,a4paper]{article}
 
+\usepackage{cmap}
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
+\usepackage{lmodern}
 \usepackage[french]{babel}
-\usepackage[a4paper,margin=2.4cm]{geometry}
+\usepackage[a4paper,margin=2.35cm]{geometry}
 \usepackage{graphicx}
 \usepackage{booktabs}
 \usepackage{array}
@@ -20,353 +22,448 @@
 
 \titleformat{\section}{\Large\bfseries\color{nblue}}{\thesection}{0.6em}{}
 \titleformat{\subsection}{\large\bfseries\color{acc}}{\thesubsection}{0.6em}{}
-\setlength{\parskip}{0.45em}
+\setlength{\parskip}{0.42em}
+\setlength{\parindent}{0pt}
+\setlist[itemize]{leftmargin=1.35em,itemsep=0.2em,topsep=0.2em}
+\setlist[enumerate]{leftmargin=1.45em,itemsep=0.2em,topsep=0.2em}
 
 \pagestyle{fancy}\fancyhf{}
-\lhead{\small\color{nblue}Analyse NLP des rapports d'incidents ASRS}
+\lhead{\small\color{nblue}Projet NLP ASRS}
 \rhead{\small\thepage}
 \renewcommand{\headrulewidth}{0.4pt}
 \captionsetup{font=small,labelfont={bf,color=nblue}}
 
-\newenvironment{narr}{%
-  \begin{list}{}{\setlength{\leftmargin}{1.2em}\setlength{\rightmargin}{1.2em}}\item[]%
-  \small\itshape\color{nblue}\guillemotleft~}{~\guillemotright\end{list}}
-
 \begin{document}
 
-% ---------- TITLE ----------
 \begin{titlepage}
 \centering
 \vspace*{1.3cm}
-{\small\color{acc}\textbf{AÉRONAUTIQUE \;|\; PROJET A3 \;|\; NLP · CLASSIFICATION · CLUSTERING}}\\[1.0cm]
-{\color{nblue}\Huge\bfseries Analyse NLP des rapports\\[0.3cm] d'incidents de sécurité aérienne\par}
-\vspace{0.45cm}
-{\large Extraction des causes récurrentes, classification des anomalies\\ et détection de signaux faibles sur la base \textbf{NASA ASRS}\par}
-\vspace{0.35cm}
-{\itshape Rapport technique}\par
+{\small\color{acc}\textbf{PROJET INFORMATIQUE -- NLP ET SECURITE AERIENNE}}\\[0.9cm]
+{\color{nblue}\Huge\bfseries Analyse automatique des rapports\\[0.25cm] d'incidents NASA ASRS\par}
 \vspace{0.5cm}
-{\large\bfseries Mehdi Tidjani \quad\textbullet\quad [Étudiant 2] \quad\textbullet\quad [Étudiant 3]\par}
-\vspace{0.8cm}
-\includegraphics[width=0.92\textwidth]{scatter.png}\\[0.2cm]
-{\small\itshape Projection sémantique des 125\,763 rapports, colorée par catégorie d'incident}
+{\large Clustering th\'ematique, classification des anomalies, signaux faibles\\ et dashboard d'aide \`a la d\'ecision\par}
+\vspace{0.45cm}
+{\itshape Rapport final acad\'emique}\par
+\vspace{0.6cm}
+{\large\bfseries Mehdi Tidjani \quad -- \quad [Etudiant 2] \quad -- \quad [Etudiant 3]\par}
+\vspace{0.9cm}
+\includegraphics[width=0.9\textwidth]{scatter.png}\\[0.2cm]
+{\small Projection des 125\,763 rapports ASRS dans l'espace s\'emantique}
 \vfill
 \begin{tabular}{rl}
-\textbf{Jeu de données} & NASA ASRS — 125\,763 rapports (2002–2025)\\
-\textbf{Cadre} & Projet A3 — équipe de 3 étudiants \;|\; 3–4 semaines\\
-\textbf{Livrables} & Pipeline NLP · Dashboards (Streamlit \& React) · Rapport\\
-\textbf{Dépôt} & \url{https://github.com/devMehdi485/asrs-ml}\\
+\textbf{Donn\'ees} & NASA ASRS -- 125\,763 rapports \\
+\textbf{P\'eriode} & juin 2002 -- d\'ecembre 2025 \\
+\textbf{M\'ethodes} & TF-IDF, embeddings, UMAP, HDBSCAN, LDA, SVM \\
+\textbf{Livrables} & notebook, pipeline Python, dashboard Streamlit, dashboard React, rapport PDF \\
+\textbf{D\'ep\^ot} & \url{https://github.com/devMehdi485/asrs-ml}
 \end{tabular}
 \vspace{0.8cm}
 \end{titlepage}
 
-% ---------- ABSTRACT (seul sur sa page) ----------
-\thispagestyle{empty}
-\vspace*{2cm}
-\begin{abstract}
-\noindent Le présent rapport documente une chaîne complète de traitement automatique du
-langage naturel (NLP) appliquée à 125\,763 rapports d'incidents de la base \emph{Aviation
-Safety Reporting System} (ASRS) de la NASA. L'objectif est de transformer un volume massif
-de récits en texte libre en information structurée et exploitable pour la sécurité
-aérienne. La méthodologie combine un prétraitement linguistique, une vectorisation hybride
-(TF-IDF, word2vec et embeddings de phrases), un clustering thématique (comparaison
-K-Means / HDBSCAN), une modélisation de sujets (LDA) et une classification supervisée
-(régression logistique, SVM). L'analyse fait émerger 81 thèmes, regroupés en 11 catégories
-métier, atteint un score F1 pondéré de 0,615 en classification, et identifie des signaux
-faibles émergents (drones, brouillage GPS, batteries au lithium). Les résultats sont
-interprétés au regard des enjeux opérationnels de la sécurité aérienne.
-
-\bigskip
-\noindent\textbf{Mots-clés :} NLP, sécurité aérienne, ASRS, clustering, LDA, classification
-de texte, détection d'anomalies.
-\end{abstract}
-\newpage
-
 \tableofcontents
 \newpage
 
-% ---------- 1 ----------
-\section{Contexte et problématique}
+\section{Contexte et probl\'ematique}
 
-La base \emph{Aviation Safety Reporting System} (ASRS) rassemble des centaines de milliers
-de rapports d'incidents soumis volontairement par les acteurs du transport aérien. Sa
-richesse réside dans les \textbf{récits en texte libre} décrivant chaque événement ; sa
-principale difficulté tient au fait que cette information déterminante n'est pas structurée
-et qu'un volume de cette ampleur ne peut être analysé manuellement.
+La base NASA ASRS (\emph{Aviation Safety Reporting System}) regroupe des rapports
+d'incidents a\'eriens d\'eclar\'es volontairement par des pilotes, contr\^oleurs et autres
+acteurs op\'erationnels. Chaque rapport contient un r\'ecit en texte libre qui explique le
+contexte, le d\'eroulement de l'incident et les facteurs ayant contribu\'e \`a l'\'ev\'enement.
 
-La problématique traitée est donc la suivante : \textbf{comment exploiter automatiquement
-ces récits afin d'extraire les causes récurrentes d'incidents, d'en classifier les types et
-de détecter les signaux faibles susceptibles de précéder des accidents ?} Le traitement
-automatique du langage naturel constitue un cadre adapté à cette question, en permettant de
-structurer, regrouper et hiérarchiser l'information textuelle à grande échelle.
+Le projet porte sur 125\,763 rapports couvrant la p\'eriode de juin 2002 \`a d\'ecembre 2025.
+Le volume rend impossible une lecture manuelle compl\`ete. La difficult\'e principale est donc
+de transformer ces r\'ecits non structur\'es en informations exploitables : causes
+r\'ecurrentes, groupes de rapports similaires, cat\'egories d'anomalies et signaux rares.
 
-% ---------- 2 ----------
+La probl\'ematique trait\'ee est la suivante : comment exploiter automatiquement les r\'ecits
+ASRS pour aider \`a identifier les tendances de s\'ecurit\'e a\'erienne et les risques
+\'emergents ?
+
 \section{Objectifs}
 
-\begin{enumerate}[leftmargin=1.5em]
-  \item \textbf{Extraction des causes récurrentes} : faire émerger, sans supervision, les
-  grands thèmes d'incidents présents dans le corpus (clustering et modélisation de sujets).
-  \item \textbf{Classification des anomalies} : prédire automatiquement la catégorie
-  d'anomalie d'un rapport à partir de son contenu textuel (apprentissage supervisé).
-  \item \textbf{Détection de signaux faibles} : identifier les rapports atypiques décrivant
-  des phénomènes rares et potentiellement précurseurs (détection d'anomalies).
+Le projet poursuit cinq objectifs op\'erationnels :
+
+\begin{enumerate}
+  \item identifier automatiquement les causes r\'ecurrentes pr\'esentes dans les r\'ecits ;
+  \item regrouper les rapports similaires par th\'ematique ;
+  \item classifier les cat\'egories d'anomalies \`a partir du texte ;
+  \item d\'etecter des signaux faibles et des risques \'emergents ;
+  \item fournir un dashboard interactif permettant d'explorer les r\'esultats.
 \end{enumerate}
 
-% ---------- 3 ----------
-\section{Méthodologie}
+Le r\'esultat attendu n'est pas seulement un mod\`ele, mais une cha\^ine compl\`ete :
+donn\'ees brutes, traitements NLP, r\'esultats interpr\'etables et interface de consultation.
 
-Chaque étape de la chaîne de traitement est décrite ci-dessous, accompagnée de la
-justification du choix méthodologique retenu.
+\section{M\'ethodologie}
 
-\subsection{Données et prétraitement}
-L'étude porte sur un export de \textbf{125\,763 rapports} (2002–2025). Les champs textuels
-(\emph{narratives} et synopsis) sont disponibles à 100\,\%, et les métadonnées clés sont
-très majoritairement renseignées (anomalie 99,7\,\%, phase de vol 95,9\,\%, type d'aéronef
-98,9\,\%, date 100\,\%). Les données proviennent de l'outil officiel ASRS ; un jeu
-équivalent est également diffusé sur \textbf{Kaggle}, utilisé ici comme source
-complémentaire pour la reproductibilité et la comparaison avec d'autres notebooks et jeux
-de données.
+\subsection{Donn\'ees}
 
-Un \textbf{nettoyage standard} est appliqué aux récits (suppression des artefacts de
-désidentification, mise en minuscules, tokenisation, retrait des mots vides et
-lemmatisation). Cette étape vise simplement à \textbf{réduire le bruit} afin de concentrer
-l'analyse sur les termes porteurs de sens.
+\textbf{Entr\'ee.} Les donn\'ees d'entr\'ee sont les rapports ASRS export\'es au format CSV.
+Le jeu utilis\'e contient 125\,763 rapports. Les champs principaux sont le r\'ecit
+(\emph{narrative}), le synopsis, la date, la phase de vol, le type d'anomalie et des
+m\'etadonn\'ees techniques.
+
+\textbf{Traitement.} Le pipeline charge le fichier ASRS, rep\`ere automatiquement les
+colonnes utiles et fusionne les champs textuels pour obtenir un texte d'analyse par
+rapport. Les m\'etadonn\'ees sont conserv\'ees pour interpr\'eter les r\'esultats par phase de
+vol, date ou type d'anomalie.
+
+\textbf{Sortie.} Cette \'etape produit un corpus de 125\,763 textes associ\'es \`a leurs
+m\'etadonn\'ees. La p\'eriode couverte va de 2002-06 \`a 2025-12. Les phases les plus
+repr\'esent\'ees sont \emph{Cruise} (20\,738 rapports), \emph{Parked} (15\,493),
+\emph{Initial Approach} (12\,880), \emph{Taxi} (12\,294) et \emph{Climb} (11\,132).
+
+\subsection{Pr\'etraitement}
+
+\textbf{Entr\'ee.} Le pr\'etraitement part des r\'ecits bruts et des synopsis extraits du
+fichier ASRS.
+
+\textbf{Traitement.} Les textes sont nettoy\'es afin de retirer le bruit li\'e au format des
+rapports : marqueurs de d\'esidentification, casse, ponctuation non informative, mots tr\`es
+fr\'equents et formes lexicales redondantes. Une lemmatisation est appliqu\'ee pour rapprocher
+les variantes d'un m\^eme terme.
+
+\textbf{Sortie.} Cette \'etape produit un corpus nettoy\'e. Il sert ensuite \`a calculer les
+repr\'esentations num\'eriques des rapports et \`a extraire les mots caract\'eristiques des
+th\`emes.
 
 \subsection{Vectorisation}
-Trois représentations complémentaires sont employées, chacune répondant à un besoin
-distinct :
-\begin{itemize}[leftmargin=1.4em]
-  \item \textbf{TF-IDF} (uni et bigrammes) : représentation creuse et interprétable,
-  permettant d'identifier les termes caractéristiques d'un thème ou d'une classe ; elle sert
-  de base à la classification et à la labellisation.
-  \item \textbf{word2vec} entraîné sur le corpus : représentation dense capturant la
-  proximité sémantique du vocabulaire spécialisé, utile pour valider la cohérence lexicale
-  du domaine.
-  \item \textbf{Embeddings de phrases} (\texttt{all-MiniLM-L6-v2}) : représentation
-  contextuelle encodant le sens global d'un récit. Ce choix se justifie par la variabilité
-  d'expression des déclarants : deux récits décrivant un même événement avec des
-  formulations différentes sont rapprochés dans l'espace vectoriel, ce qui améliore la
-  cohérence du clustering.
-\end{itemize}
 
-\subsection{Clustering thématique et construction des catégories}
-Les embeddings de phrases sont réduits par \textbf{UMAP}, puis deux algorithmes de
-clustering sont \textbf{comparés sur les mêmes données} : K-Means et HDBSCAN. Cette
-comparaison permet une sélection objective fondée sur des métriques de cohérence, plutôt
-qu'un choix imposé a priori ; une règle de décision écarte en outre toute solution
-dégénérée (nombre de clusters trop faible).
+\textbf{Entr\'ee.} La vectorisation utilise le corpus nettoy\'e.
 
-Le clustering produit des \textbf{thèmes} fins. Pour offrir une vue d'ensemble lisible, ces
-thèmes sont ensuite \textbf{regroupés en 11 catégories métier} (macro-familles). Il importe
-de distinguer ces deux niveaux de granularité :
-\begin{itemize}[leftmargin=1.4em,nosep]
-  \item les \textbf{thèmes d'incidents} sont les 81 groupes fins issus automatiquement du
-  clustering NLP (p.~ex. « Problèmes de train d'atterrissage », « Givrage en vol ») ;
-  \item les \textbf{catégories d'incidents} sont 11 macro-familles obtenues en regroupant
-  ces thèmes selon une nomenclature métier, cohérente avec les grands domaines suivis par
-  les analystes (p.~ex. « Équipement \& systèmes », « Sol \& piste »).
-\end{itemize}
+\textbf{Traitement.} Les rapports ont \'et\'e transform\'es en vecteurs TF-IDF afin
+d'identifier les mots et bigrammes les plus caract\'eristiques de chaque incident. En
+parall\`ele, des embeddings de phrases \texttt{all-MiniLM-L6-v2} ont \'et\'e calcul\'es pour
+repr\'esenter le sens global des r\'ecits. Un mod\`ele Word2Vec entra\^in\'e sur le corpus a
+\'egalement \'et\'e utilis\'e pour v\'erifier la coh\'erence du vocabulaire a\'eronautique.
 
-\subsection{Modélisation de sujets (LDA)}
-Une modélisation \textbf{LDA} complète le clustering. Les deux approches sont
-complémentaires : le clustering attribue chaque récit à un groupe unique, tandis que LDA
-décompose le corpus en sujets probabilistes, un même document pouvant relever de plusieurs
-sujets. La qualité des sujets est évaluée par la \textbf{cohérence $c_v$}.
+\textbf{Sortie.} La sortie est double : une matrice TF-IDF pour la classification et
+l'interpr\'etation, et une matrice d'embeddings pour le clustering th\'ematique. Les voisins
+Word2Vec confirment la coh\'erence du vocabulaire : \texttt{runway} est proche de
+\texttt{rwy} (0,84) et \texttt{taxiway} (0,65), \texttt{weather} de
+\texttt{thunderstorm} (0,76) et \texttt{storm} (0,74), \texttt{altitude} de
+\texttt{alt} (0,70) et \texttt{descended} (0,67).
 
-\subsection{Classification supervisée}
-Des modèles linéaires — \textbf{régression logistique} et \textbf{SVM linéaire} — sont
-entraînés sur la représentation TF-IDF afin de \textbf{prédire la catégorie d'anomalie d'un
-rapport à partir de son contenu textuel global}, et non de mots isolés : c'est l'ensemble
-du récit, vectorisé, qui détermine la prédiction. Le choix de modèles linéaires se justifie
-par leur robustesse, leur rapidité et leur interprétabilité, propriétés jugées prioritaires
-devant un gain marginal de performance qu'apporteraient des modèles moins transparents.
+\subsection{Clustering th\'ematique}
 
-\subsection{Détection de signaux faibles et analyse temporelle}
-La détection de signaux faibles repose sur un \textbf{Isolation Forest} appliqué aux
-représentations réduites, complété par les points classés comme bruit par HDBSCAN.
-L'analyse temporelle agrège les volumes mensuels, détecte les pics par z-score et suit
-l'évolution de la part de chaque thème dans le temps.
+\textbf{Entr\'ee.} Le clustering utilise les embeddings de phrases, qui rapprochent les
+rapports d\'ecrivant des situations similaires m\^eme si les mots exacts diff\`erent.
 
-% ---------- 4 ----------
-\section{Résultats}
+\textbf{Traitement.} Les embeddings sont r\'eduits avec UMAP pour obtenir un espace plus
+compact. Deux approches sont compar\'ees sur ce m\^eme espace : K-Means et HDBSCAN.
+K-Means produit des groupes fixes, tandis que HDBSCAN isole aussi les rapports trop
+atypiques pour \^etre rattach\'es clairement \`a un groupe.
 
-\subsection{Structure thématique du corpus}
-L'analyse fait émerger \textbf{81 thèmes}, regroupés en \textbf{11 catégories métier}
-(figure~\ref{fig:cat}). La répartition met en évidence une forte prédominance des incidents
-liés à l'\textbf{équipement et aux systèmes} (43,8\,\% du corpus), devant les incidents au
-sol et sur piste (13,3\,\%) et les écarts de trajectoire ou d'altitude (7,8\,\%).
+\textbf{Sortie.} HDBSCAN est retenu. Il produit 81 th\`emes et 32,5\,\% de points class\'es
+comme bruit. Ces points ne sont pas supprim\'es : ils sont r\'eutilis\'es dans la d\'etection de
+signaux faibles. Les 81 th\`emes sont ensuite regroup\'es en 11 cat\'egories m\'etier pour
+faciliter la lecture.
+
+\subsection{Mod\'elisation des sujets}
+
+\textbf{Entr\'ee.} La mod\'elisation des sujets utilise le corpus nettoy\'e et les
+repr\'esentations lexicales.
+
+\textbf{Traitement.} Une mod\'elisation LDA est appliqu\'ee pour obtenir une lecture
+compl\'ementaire aux clusters. Le clustering affecte chaque rapport \`a un groupe principal ;
+LDA met en \'evidence des ensembles de mots qui reviennent ensemble dans le corpus.
+
+\textbf{Sortie.} Le mod\`ele LDA obtient une coh\'erence $c_v$ de 0,5698. Les sujets
+retrouv\'es recouvrent les grandes situations op\'erationnelles du corpus : approche,
+altitude, piste, cabine, moteur, carburant, maintenance, turbulence, taxi et communications
+ATC.
+
+\subsection{Classification supervis\'ee}
+
+\textbf{Entr\'ee.} La classification utilise les vecteurs TF-IDF et les cat\'egories
+d'anomalies ASRS. Les huit anomalies les plus repr\'esent\'ees sont conserv\'ees pour limiter
+le d\'es\'equilibre extr\^eme entre classes.
+
+\textbf{Traitement.} Deux mod\`eles lin\'eaires sont entra\^in\'es : r\'egression logistique et
+SVM lin\'eaire. La pr\'ediction repose sur l'ensemble du r\'ecit vectoris\'e, et non sur quelques
+mots isol\'es.
+
+\textbf{Sortie.} Les mod\`eles produisent une cat\'egorie d'anomalie probable pour chaque
+rapport. Le SVM lin\'eaire obtient le meilleur F1 pond\'er\'e : 0,615.
+
+\subsection{D\'etection des signaux faibles}
+
+\textbf{Entr\'ee.} La d\'etection utilise les repr\'esentations r\'eduites, les distances aux
+groupes et les rapports consid\'er\'es comme bruit par HDBSCAN.
+
+\textbf{Traitement.} Un score d'atypicit\'e est calcul\'e avec Isolation Forest et compl\'et\'e
+par l'information issue du clustering. Les rapports rares, isol\'es ou associ\'es \`a des
+th\`emes \'emergents sont remont\'es dans une liste de surveillance.
+
+\textbf{Sortie.} Le pipeline identifie 2\,463 rapports atypiques. Les th\`emes les plus
+visibles concernent les drones, le brouillage GPS, les batteries lithium et les outils de
+navigation \'electronique. Ces r\'esultats servent \`a rep\'erer des risques peu fr\'equents mais
+importants pour la veille de s\'ecurit\'e.
+
+\section{R\'esultats}
+
+\subsection{Structure th\'ematique}
+
+Le clustering fait \'emerger 81 th\`emes regroup\'es en 11 cat\'egories m\'etier. La cat\'egorie
+la plus importante est \emph{Equipement \& syst\`emes}, avec 37\,179 rapports, 21 th\`emes et
+43,8\,\% du corpus th\'ematis\'e. Elle regroupe notamment les pannes avioniques, les trains
+d'atterrissage, les pannes hydrauliques, la pressurisation, les instruments et les syst\`emes
+automatiques.
+
+\begin{table}[h]\centering\small
+\caption{R\'epartition des th\`emes par cat\'egorie m\'etier.}
+\begin{tabular}{lrrr}
+\toprule
+\textbf{Cat\'egorie} & \textbf{Rapports} & \textbf{Th\`emes} & \textbf{Part} \\
+\midrule
+Equipement \& syst\`emes & 37\,179 & 21 & 43,8\,\% \\
+Sol \& piste & 11\,256 & 7 & 13,3\,\% \\
+Trajectoire \& altitude & 6\,633 & 10 & 7,8\,\% \\
+Cabine \& s\'ecurit\'e & 6\,190 & 8 & 7,3\,\% \\
+Moteur \& carburant & 5\,457 & 11 & 6,4\,\% \\
+Conflits de trafic & 4\,875 & 6 & 5,7\,\% \\
+M\'et\'eo \& environnement & 4\,612 & 6 & 5,4\,\% \\
+Communications \& ATC & 3\,153 & 5 & 3,7\,\% \\
+Signaux \'emergents & 2\,967 & 5 & 3,5\,\% \\
+Chargement \& hazmat & 1\,959 & 1 & 2,3\,\% \\
+Facteurs humains & 591 & 1 & 0,7\,\% \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \begin{figure}[h]\centering
   \includegraphics[width=0.82\textwidth]{categories.png}
-  \caption{Répartition des incidents par catégorie métier (regroupement des 81 thèmes en
-  11 macro-familles).}\label{fig:cat}
+  \caption{R\'epartition des incidents par cat\'egorie m\'etier.}
+  \label{fig:categories}
 \end{figure}
 
-Cette prédominance des signalements liés à l'équipement ne traduit pas nécessairement une
-fréquence accrue de pannes, mais une \textbf{propension élevée des équipages à signaler tout
-dysfonctionnement technique}. Sur le plan opérationnel, ce constat conforte la pertinence
-d'une politique de \textbf{maintenance proactive et prédictive}, susceptible d'exploiter ce
-volume de signalements pour anticiper les défaillances.
+Pour l'analyse de s\'ecurit\'e, cette structure montre que les rapports ASRS contiennent une
+forte densit\'e de retours sur les syst\`emes avion et la maintenance. Les incidents au sol et
+sur piste forment le deuxi\`eme ensemble, ce qui met en \'evidence l'importance des phases de
+taxi, d'alignement et de circulation au sol.
+
+\begin{table}[h]\centering\small
+\caption{Principaux th\`emes extraits par HDBSCAN.}
+\begin{tabular}{rlrr}
+\toprule
+\textbf{Cluster} & \textbf{Th\`eme} & \textbf{Rapports} & \textbf{Part} \\
+\midrule
+0 & Pannes avioniques \& syst\`emes (jets r\'egionaux) & 22\,258 & 26,2\,\% \\
+72 & Incursions \& erreurs au sol (taxi/piste) & 8\,458 & 10,0\,\% \\
+29 & Fum\'ee, odeurs \& \'emanations en cabine & 3\,392 & 4,0\,\% \\
+75 & Conflits de trafic en circuit d'a\'erodrome & 2\,656 & 3,1\,\% \\
+65 & Turbulence de sillage & 2\,459 & 2,9\,\% \\
+44 & Maintenance \& inspections & 2\,108 & 2,5\,\% \\
+6 & Chargement, masse \& marchandises dangereuses & 1\,959 & 2,3\,\% \\
+69 & Proximit\'e du terrain \`a l'approche (CFIT) & 1\,907 & 2,2\,\% \\
+77 & Coordination ATC \& gestion des secteurs & 1\,858 & 2,2\,\% \\
+42 & Probl\`emes de train d'atterrissage & 1\,804 & 2,1\,\% \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \begin{figure}[h]\centering
   \includegraphics[width=0.82\textwidth]{top_themes.png}
-  \caption{Douze thèmes d'incidents les plus volumineux.}\label{fig:top}
+  \caption{Douze th\`emes les plus volumineux.}
 \end{figure}
 
-Chaque thème est associé à un libellé métier et à des termes saillants
-(figure~\ref{fig:wc}), ce qui en assure la lisibilité.
+\subsection{Qualit\'e des clusters}
+
+\begin{table}[h]\centering\small
+\caption{Comparaison K-Means / HDBSCAN sur les embeddings r\'eduits par UMAP.}
+\begin{tabular}{lrrrrrr}
+\toprule
+\textbf{Mod\`ele} & \textbf{Clusters} & \textbf{Bruit} & \textbf{Silhouette} &
+\textbf{Davies-Bouldin} & \textbf{ARI} & \textbf{Puret\'e} \\
+\midrule
+K-Means & 15 & 0,0\,\% & 0,382 & 0,9447 & 0,0410 & 0,1326 \\
+\textbf{HDBSCAN} & \textbf{81} & \textbf{32,5\,\%} & \textbf{0,5897} &
+\textbf{0,5747} & 0,0127 & \textbf{0,1651} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+HDBSCAN est retenu car il s\'epare mieux les groupes : la silhouette est plus \'elev\'ee et
+l'indice Davies-Bouldin est plus faible. Le taux de bruit de 32,5\,\% est coh\'erent avec la
+nature des rapports ASRS : certains r\'ecits d\'ecrivent des situations tr\`es sp\'ecifiques,
+rarement r\'ep\'et\'ees dans le corpus.
+
+La puret\'e par rapport aux anomalies officielles reste mod\'er\'ee. Ce r\'esultat est attendu :
+les anomalies ASRS sont des codes administratifs, tandis que les clusters regroupent des
+situations d\'ecrites dans les r\'ecits. Un m\^eme code peut donc couvrir plusieurs contextes
+op\'erationnels diff\'erents.
 
 \begin{figure}[h]\centering
-  \includegraphics[width=0.95\textwidth]{wordclouds.png}
-  \caption{Nuages de mots (c-TF-IDF) des quatre principaux thèmes.}\label{fig:wc}
+  \includegraphics[width=0.86\textwidth]{scatter.png}
+  \caption{Projection UMAP des rapports et structure des groupes th\'ematiques.}
 \end{figure}
 
-\subsection{Cohérence des clusters}
-\begin{table}[h]\centering\small
-\caption{Comparaison K-Means / HDBSCAN sur les données réduites (UMAP).}\label{tab:clust}
-\begin{tabular}{lrrrrr}
-\toprule
-\textbf{Modèle} & \textbf{Clusters} & \textbf{Silhouette} & \textbf{Davies-Bouldin} & \textbf{Bruit} & \textbf{Pureté} \\
-\midrule
-K-Means & 15 & 0,382 & 0,945 & 0\,\% & 0,133 \\
-\textbf{HDBSCAN (retenu)} & \textbf{81} & \textbf{0,590} & \textbf{0,575} & 32\,\% & 0,165 \\
-\bottomrule
-\end{tabular}
-\end{table}
-Le modèle \textbf{HDBSCAN} est retenu : il présente une silhouette supérieure (0,590 contre
-0,382) et un indice de Davies-Bouldin plus faible, signe d'une meilleure séparation des
-groupes. La concordance modérée avec les catégories d'anomalies officielles (pureté, ARI)
-s'explique par la granularité supérieure des thèmes sémantiques obtenus, plus fins que les
-catégories codées par les analystes. Les points classés comme bruit (32\,\%) sont exploités
-pour la détection de signaux faibles.
+\begin{figure}[h]\centering
+  \includegraphics[width=0.94\textwidth]{wordclouds.png}
+  \caption{Mots caract\'eristiques de plusieurs th\`emes principaux.}
+\end{figure}
 
-\subsection{Validation sémantique (word2vec) et modélisation LDA}
-Le modèle word2vec entraîné sur le corpus restitue des proximités sémantiques cohérentes
-avec le domaine (tableau~\ref{tab:w2v}), ce qui valide la qualité des données et du
-prétraitement. La cohérence moyenne du modèle LDA atteint $c_v = 0{,}57$, indiquant des
-sujets lexicalement homogènes.
+\subsection{Classification}
 
 \begin{table}[h]\centering\small
-\caption{word2vec — voisins les plus proches (similarité cosinus).}\label{tab:w2v}
-\begin{tabular}{ll}
-\toprule
-\textbf{Terme} & \textbf{Voisins les plus proches} \\
-\midrule
-\texttt{runway}   & rwy (0,84), taxiway (0,65), intersecting (0,59), midfield (0,59) \\
-\texttt{engine}   & eng (0,69), feathered (0,57), magneto (0,54), crossbleed (0,54) \\
-\texttt{weather}  & thunderstorm (0,76), storm (0,74), bkn (0,68), forecast (0,66) \\
-\texttt{altitude} & alt (0,70), descended (0,67), descend (0,65), level (0,64) \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\subsection{Classification des anomalies}
-\begin{table}[h]\centering\small
-\caption{Performance de la classification (top-8 anomalies, TF-IDF).}\label{tab:clf}
+\caption{Performance de classification sur les huit anomalies principales.}
 \begin{tabular}{lrr}
 \toprule
-\textbf{Modèle} & \textbf{F1 macro} & \textbf{F1 pondéré} \\
+\textbf{Mod\`ele} & \textbf{F1 macro} & \textbf{F1 pond\'er\'e} \\
 \midrule
-Régression logistique & 0,518 & 0,606 \\
-SVM linéaire & 0,517 & \textbf{0,615} \\
+R\'egression logistique & 0,518 & 0,606 \\
+SVM lin\'eaire & 0,517 & \textbf{0,615} \\
 \bottomrule
 \end{tabular}
 \end{table}
-Les résultats indiquent une performance satisfaisante au regard de la difficulté de la
-tâche (8 catégories, texte libre), avec un F1 pondéré atteignant 0,615. Les classes au
-vocabulaire spécifique sont les mieux reconnues (\emph{ATC Issue}, F1\,=\,0,76 ;
-\emph{NMAC}, 0,69 ; \emph{Aircraft Equipment Problem Critical}, 0,67), tandis que les
-classes rares et les rapports relevant de plusieurs anomalies demeurent plus difficiles à
-discriminer.
 
-% ---------- 5 ----------
-\section{Discussion}
+Le SVM lin\'eaire obtient le meilleur score global avec un F1 pond\'er\'e de 0,615. La
+performance est correcte pour une t\^ache fond\'ee sur du texte libre et des cat\'egories
+parfois proches.
+
+\begin{table}[h]\centering\small
+\caption{D\'etail des performances par classe pour le mod\`ele report\'e.}
+\begin{tabular}{lrrrr}
+\toprule
+\textbf{Classe} & \textbf{Pr\'ecision} & \textbf{Rappel} & \textbf{F1} & \textbf{Support} \\
+\midrule
+ATC Issue All Types & 0,86 & 0,68 & 0,76 & 5\,406 \\
+Aircraft Equipment Problem Critical & 0,80 & 0,58 & 0,67 & 8\,059 \\
+Aircraft Equipment Problem Less Severe & 0,53 & 0,44 & 0,48 & 4\,804 \\
+Conflict Airborne Conflict & 0,24 & 0,28 & 0,26 & 695 \\
+Conflict Ground Conflict & 0,52 & 0,64 & 0,58 & 1\,069 \\
+Conflict NMAC & 0,65 & 0,73 & 0,69 & 1\,312 \\
+Deviation / Discrepancy -- Procedural FAR & 0,12 & 0,74 & 0,21 & 786 \\
+Deviation / Discrepancy -- Published Material / Policy & 0,52 & 0,48 & 0,50 & 2\,587 \\
+\midrule
+Accuracy & & & 0,57 & 24\,718 \\
+Macro avg & 0,53 & 0,57 & 0,52 & 24\,718 \\
+Weighted avg & 0,68 & 0,57 & 0,61 & 24\,718 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Les classes les mieux reconnues sont celles dont le vocabulaire est plus sp\'ecifique :
+probl\`emes ATC, \'equipements critiques et conflits NMAC. Les classes li\'ees aux
+d\'eviations proc\'edurales sont plus difficiles, car elles peuvent appara\^itre dans des
+contextes tr\`es diff\'erents.
 
 \subsection{Tendances temporelles}
-L'analyse temporelle (figures~\ref{fig:vol} et~\ref{fig:heat}) révèle plusieurs thèmes en
-progression récente, dont l'interprétation présente un intérêt opérationnel direct :
-\begin{itemize}[leftmargin=1.4em]
-  \item \textbf{Incursions et erreurs au sol — en hausse.} Cette évolution est cohérente
-  avec la \textbf{densification du trafic} et la saturation croissante des plateformes
-  aéroportuaires, qui multiplient les situations de croisement et les risques d'erreur sur
-  les voies de circulation.
-  \item \textbf{Fumées et odeurs en cabine — en hausse.} Cette tendance appelle une
-  vigilance renforcée sur les circuits de prélèvement et la qualité de l'air cabine
-  (\emph{fume events}).
-  \item \textbf{Marchandises dangereuses — en hausse.} Cette progression est cohérente avec
-  la croissance du fret aérien et soulève des enjeux de conformité documentaire et de
-  sûreté.
-\end{itemize}
+
+L'analyse temporelle agr\`ege les rapports par mois et par ann\'ee. Elle permet de rep\'erer
+les volumes anormaux, les th\`emes en hausse et les \'evolutions par type d'anomalie.
 
 \begin{figure}[h]\centering
   \includegraphics[width=0.86\textwidth]{temporal_volume.png}
-  \caption{Volume mensuel de rapports (2002–2025).}\label{fig:vol}
+  \caption{Volume mensuel de rapports ASRS sur la p\'eriode \'etudi\'ee.}
 \end{figure}
+
 \begin{figure}[h]\centering
   \includegraphics[width=0.86\textwidth]{heatmap.png}
-  \caption{Heatmap : type d'anomalie × année.}\label{fig:heat}
+  \caption{Heatmap anomalie par ann\'ee.}
 \end{figure}
 
+Plusieurs th\`emes montrent une progression r\'ecente : les incursions et erreurs au sol
+(+5,0\,\%), les fum\'ees et odeurs en cabine (+3,4\,\%), les marchandises dangereuses
+(+4,2\,\%) et les rencontres avec drones ou objets en vol (+2,5\,\%). Pour la s\'ecurit\'e
+a\'erienne, ces tendances orientent la veille vers les op\'erations au sol, la qualit\'e de
+l'air cabine, la gestion du fret et l'int\'egration de nouveaux objets dans l'espace
+a\'erien.
+
 \subsection{Signaux faibles}
-La détection d'anomalies fait remonter des phénomènes rares mais à fort enjeu, notamment les
-rencontres avec des \textbf{drones}, le \textbf{brouillage du signal GPS} et les
-\textbf{batteries au lithium}. Ces thématiques, quasi absentes au début de la période
-étudiée, illustrent l'apparition de nouvelles classes de risques. Un récit représentatif en
-témoigne :
 
-\begin{narr}
-Approach control advised there was unauthorized drone use in the area\ldots I observed a
-drone pass just left of the aircraft, approximately 20 feet from our left wing.
-\end{narr}
+La d\'etection de signaux faibles fait ressortir 2\,463 rapports atypiques. Les th\`emes
+\'emergents identifi\'es sont :
 
-\noindent De tels rapports, noyés dans la masse, échapperaient à une analyse manuelle. Leur
-remontée automatique constitue l'apport principal du dispositif de détection : elle permet
-d'identifier précocement des risques émergents avant qu'ils ne se traduisent par des
-événements plus graves. L'impact potentiel sur la sécurité aérienne est donc significatif,
-tant pour l'orientation des programmes de prévention que pour la veille réglementaire.
+\begin{table}[h]\centering\small
+\caption{Th\`emes associ\'es aux signaux faibles et risques \'emergents.}
+\begin{tabular}{lrrl}
+\toprule
+\textbf{Th\`eme} & \textbf{Rapports} & \textbf{Part} & \textbf{Tendance} \\
+\midrule
+Rencontres avec drones / objets en vol & 1\,221 & 1,4\,\% & en hausse (+2,5\,\%) \\
+Brouillage GPS \& anomalies de navigation & 626 & 0,7\,\% & stable (+1,4\,\%) \\
+Batteries lithium (hazmat) & 471 & 0,6\,\% & stable (+1,2\,\%) \\
+Drones : violations d'espace (UAS) & 422 & 0,5\,\% & stable (+1,1\,\%) \\
+EFB / iPad \& bases de donn\'ees & 227 & 0,3\,\% & stable (-0,2\,\%) \\
+\bottomrule
+\end{tabular}
+\end{table}
 
-% ---------- 6 ----------
-\section{Limites et perspectives}
+Ces signaux ne repr\'esentent pas les volumes les plus importants du corpus, mais ils sont
+utiles pour la veille. Les drones et les brouillages GPS indiquent des risques li\'es \`a
+l'\'evolution de l'environnement op\'erationnel. Les batteries lithium et les probl\`emes de
+chargement renvoient \`a des enjeux de transport de marchandises dangereuses.
 
-Plusieurs limites doivent être prises en compte dans l'interprétation des résultats :
-\begin{itemize}[leftmargin=1.4em]
-  \item \textbf{Déséquilibre des classes.} La distribution des anomalies est fortement
-  inégale, ce qui pénalise la reconnaissance des classes rares malgré une pondération
-  équilibrée à l'entraînement.
-  \item \textbf{Données désidentifiées.} La suppression des identifiants et des localisations
-  entraîne une perte de contexte potentiellement informatif.
-  \item \textbf{Biais de déclaration.} Le caractère volontaire de l'ASRS implique que le
-  corpus reflète les incidents \emph{signalés}, et non l'ensemble des incidents survenus.
-  \item \textbf{Hétérogénéité d'un méga-cluster.} Le regroupement relatif à l'équipement
-  avionique demeure plus difficile à interpréter finement.
+\section{Dashboard}
+
+Deux interfaces ont \'et\'e produites pour exploiter les r\'esultats sans relancer les
+traitements :
+
+\begin{itemize}
+  \item un dashboard Streamlit, orient\'e analyse rapide et exploration des artefacts Python ;
+  \item un dashboard React/TypeScript, aliment\'e par un export JSON statique des r\'esultats.
 \end{itemize}
 
-\noindent Plusieurs pistes d'amélioration sont envisageables. L'emploi de \textbf{BERTopic}
-permettrait une thématisation de bout en bout intégrant nativement l'analyse temporelle. Le
-recours à des \textbf{embeddings spécialisés}, ré-entraînés sur un corpus aéronautique,
-améliorerait la séparation des thèmes techniques. Une \textbf{classification
-multi-étiquettes} rendrait mieux compte des rapports relevant simultanément de plusieurs
-anomalies. Enfin, le croisement des signaux faibles avec des données externes (trafic,
-météorologie) ouvrirait la voie à une analyse à visée prédictive.
+Le dashboard React contient six pages : synth\`ese ex\'ecutive, vue op\'erationnelle,
+exploration des clusters, analyse th\'ematique, carte temporelle et signaux faibles. Les
+donn\'ees affich\'ees proviennent du fichier \texttt{frontend/public/data/asrs.json}, ce qui
+permet de consulter les r\'esultats sans recalculer les mod\`eles.
 
-% ---------- 7 ----------
+Le dashboard remplit trois fonctions principales. D'abord, il donne une vue globale des
+volumes, cat\'egories et principaux th\`emes. Ensuite, il permet d'inspecter un cluster :
+mots-cl\'es, taille, phase dominante, anomalie dominante et exemples de rapports. Enfin, il
+sert \`a surveiller les tendances temporelles et les rapports atypiques.
+
+\section{Limites et perspectives}
+
+Les r\'esultats doivent \^etre interpr\'et\'es avec plusieurs limites.
+
+Le corpus ASRS repose sur des d\'eclarations volontaires. Il refl\`ete donc les incidents
+signal\'es, pas l'ensemble des incidents survenus. Les donn\'ees sont aussi d\'esidentifi\'ees,
+ce qui prot\`ege les personnes mais retire certains \'el\'ements de contexte.
+
+Les classes d'anomalies sont fortement d\'es\'equilibr\'ees. Cela explique une partie des
+difficult\'es de classification, en particulier pour les classes rares. Certains rapports
+peuvent aussi relever de plusieurs anomalies, alors que la classification mise en place
+reste centr\'ee sur une cible principale.
+
+Enfin, certains grands clusters restent h\'et\'erog\`enes. Le cluster des pannes avioniques et
+syst\`emes, par exemple, contient 22\,258 rapports. Il donne une bonne vue d'ensemble, mais il
+m\'eriterait une sous-segmentation plus fine.
+
+Les perspectives principales sont :
+
+\begin{itemize}
+  \item tester une classification multi-\'etiquettes pour mieux traiter les rapports \`a
+  causes multiples ;
+  \item utiliser des embeddings sp\'ecialis\'es sur le vocabulaire a\'eronautique ;
+  \item sous-segmenter les clusters les plus volumineux ;
+  \item croiser les signaux faibles avec des donn\'ees externes, par exemple trafic,
+  m\'et\'eo ou zones a\'eroportuaires ;
+  \item ajouter un suivi automatique des nouveaux rapports dans le dashboard.
+\end{itemize}
+
 \section{Conclusion}
 
-Le projet met en évidence la faisabilité et la valeur d'une exploitation automatisée des
-récits d'incidents ASRS. À partir de 125\,763 rapports en texte libre, la chaîne de
-traitement produit 81 thèmes interprétables regroupés en 11 catégories métier, un modèle de
-classification opérationnel (F1 pondéré de 0,615), un dispositif de détection de signaux
-faibles et deux tableaux de bord interactifs restituant l'ensemble des résultats.
+Le projet a permis de construire une cha\^ine NLP compl\`ete appliqu\'ee \`a 125\,763 rapports
+NASA ASRS. Les r\'ecits bruts ont \'et\'e nettoy\'es, vectoris\'es, regroup\'es en 81 th\`emes,
+organis\'es en 11 cat\'egories m\'etier, puis exploit\'es pour la classification, l'analyse
+temporelle et la d\'etection de signaux faibles.
 
-Au-delà des performances mesurées, l'apport central du travail réside dans la
-\textbf{transformation de récits bruts en information structurée et exploitable}. En rendant
-visibles les causes récurrentes, les tendances temporelles et les risques émergents,
-l'approche proposée constitue un outil d'aide à la décision pour les acteurs de la sécurité
-aérienne, et démontre la pertinence du traitement automatique du langage naturel pour la
-valorisation des bases de retour d'expérience.
+Les r\'esultats principaux sont les suivants : HDBSCAN obtient 81 clusters avec une
+silhouette de 0,5897 ; LDA atteint une coh\'erence de 0,5698 ; le meilleur classifieur
+atteint un F1 pond\'er\'e de 0,615 ; 2\,463 rapports atypiques sont remont\'es comme signaux
+faibles. Les th\`emes dominants concernent les \'equipements et syst\`emes, les op\'erations au
+sol, les trajectoires, la cabine, le moteur et les conflits de trafic.
+
+Le dashboard final rend ces r\'esultats consultables par un utilisateur non sp\'ecialiste du
+code. Il transforme un corpus massif de r\'ecits en un outil d'exploration utile pour suivre
+les causes r\'ecurrentes, comparer les th\`emes et rep\'erer les risques \'emergents.
 
 \vfill
-\noindent\footnotesize\textit{Sources des données : NASA Aviation Safety Reporting System
-(\url{https://asrs.arc.nasa.gov/}) et jeu équivalent sur Kaggle. Code, dashboards et
-reproductibilité : \url{https://github.com/devMehdi485/asrs-ml}.}
+\noindent\footnotesize Donn\'ees : NASA Aviation Safety Reporting System
+(\url{https://asrs.arc.nasa.gov/}). Code et livrables :
+\url{https://github.com/devMehdi485/asrs-ml}.
 
 \end{document}
