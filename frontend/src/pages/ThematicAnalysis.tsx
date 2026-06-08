@@ -89,8 +89,11 @@ export default function ThematicAnalysis() {
             ))}
           </div>
           {clf.report && (
-            <Card className="mt-3 overflow-x-auto">
-              <pre className="text-[11px] leading-5 text-muted">{clf.report}</pre>
+            <Card className="mt-3">
+              <div className="mb-2 text-sm font-semibold">Détail par classe — régression logistique</div>
+              <div className="overflow-x-auto">
+                <pre className="text-[11px] leading-5 text-muted">{clf.report}</pre>
+              </div>
             </Card>
           )}
         </>

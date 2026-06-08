@@ -98,20 +98,25 @@ export default function TemporalMap() {
         <table className="border-separate" style={{ borderSpacing: 2 }}>
           <thead><tr><th></th>{heat.years.map((y) => <th key={y} className="px-1 text-[9px] text-muted">{y.slice(2)}</th>)}</tr></thead>
           <tbody>
-            {t.heatmap.anomalies.map((a, ai) => (
-              <tr key={a}>
-                <td className="whitespace-nowrap pr-2 text-right text-[10px] text-muted" style={{ maxWidth: 200 }}>{a}</td>
-                {heat.mat[ai].map((v, yi) => (
-                  <td key={yi} title={`${a} · ${heat.years[yi]} : ${v}`}
-                    style={{ width: 16, height: 16, borderRadius: 3, background: cellColor(v, heat.max) }} />
-                ))}
-              </tr>
-            ))}
+            {t.heatmap.anomalies.map((a, ai) => {
+              const rowMax = Math.max(1, ...heat.mat[ai]);  // normalisation PAR LIGNE
+              return (
+                <tr key={a}>
+                  <td className="truncate pr-2 text-right text-[10px] text-muted"
+                    title={a} style={{ maxWidth: 180, width: 180 }}>{a}</td>
+                  {heat.mat[ai].map((v, yi) => (
+                    <td key={yi} title={`${a} · ${heat.years[yi]} : ${v}`}
+                      style={{ width: 16, height: 16, borderRadius: 3, background: cellColor(v, rowMax) }} />
+                  ))}
+                </tr>
+              );
+            })}
           </tbody>
         </table>
-        <Explain>chaque ligne = un type d'anomalie, chaque colonne = une année.
-          Plus la case est <b>vive (rouge)</b>, plus ce type d'incident a été signalé cette
-          année-là. Une ligne qui rougit vers la droite = un risque qui progresse.</Explain>
+        <Explain>chaque ligne = un type d'anomalie, chaque colonne = une année. La couleur est
+          relative à <b>chaque type</b> : une case <b>vive (rouge)</b> marque les années de pic
+          pour ce type. Une ligne qui se réchauffe vers la droite = un type d'incident en
+          progression.</Explain>
       </Card>
 
       <Section>Part de chaque thème dans le temps (top 8)</Section>

@@ -115,12 +115,14 @@ volume = [int(v) for v in vol.values]
 mu, sd = float(np.mean(volume)), float(np.std(volume))
 peaks = [bool((v - mu) / (sd + 1e-9) >= 2) for v in volume]
 
-top_anoms = dt["anomaly"].astype(str).value_counts().head(12).index.tolist()
-da = dt[dt["anomaly"].astype(str).isin(top_anoms)]
-heat = (da.groupby([da["m"], da["anomaly"].astype(str)]).size()
+# Anomalie PRINCIPALE (avant le ';') -> libellés propres et lignes mieux remplies
+dt["anom1"] = dt["anomaly"].astype(str).str.split(";").str[0].str.strip()
+top_anoms = dt["anom1"].value_counts().head(12).index.tolist()
+da = dt[dt["anom1"].isin(top_anoms)]
+heat = (da.groupby([da["m"], da["anom1"]]).size()
         .unstack(fill_value=0).reindex(columns=top_anoms, fill_value=0))
 heat_periods = [d.strftime("%Y-%m") for d in heat.index]
-heatmap = {"anomalies": [a[:45] for a in top_anoms],
+heatmap = {"anomalies": [a[:42] for a in top_anoms],
            "periods": heat_periods,
            "matrix": [[int(x) for x in row] for row in heat.T.values.tolist()]}
 
@@ -174,7 +176,12 @@ if os.path.exists(nb_path):
                                           "f1_weighted": float(mm[1])})
     idx = full.find("precision    recall")
     if idx > 0:
-        classification["report"] = full[idx:idx + 1400]
+        end = full.find("====", idx)            # couper avant le 2e modèle
+        if end <= idx:
+            end = full.find("F1 macro", idx)     # repli
+        rep = full[idx:end].rstrip() if end > idx else full[idx:idx + 1200].rstrip()
+        classification["report"] = rep
+        classification["report_model"] = "Régression logistique"
 
 # ---- distributions (page Operational) ----
 def dist(col, n):
