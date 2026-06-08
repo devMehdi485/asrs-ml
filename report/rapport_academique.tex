@@ -347,12 +347,38 @@ Les résultats se traduisent en pistes concrètes pour la sécurité aérienne :
 % ===================================================================
 \section{Conclusion}
 
-Le projet livre une chaîne complète exploitant automatiquement 125\,763 rapports d'incidents
-en texte libre. Le regroupement non supervisé identifie 81 thèmes interprétables (silhouette
-de 0,590), agrégés en 11 catégories ; la classification supervisée atteint un F1 pondéré de
-0,615 ; la détection d'anomalies fait remonter des risques émergents. L'ensemble transforme
-une masse de récits dispersés en information structurée et exploitable, restituée dans un
-tableau de bord, et fournit des recommandations concrètes pour la sécurité aérienne.
+Ce projet a montré qu'il est possible d'exploiter automatiquement un très grand volume de
+rapports d'incidents aéronautiques afin d'en extraire des informations utiles pour la
+sécurité aérienne. À partir d'un corpus de 125\,763 rapports NASA ASRS, une chaîne complète
+de traitement NLP a été développée, depuis le prétraitement des récits jusqu'à leur analyse
+et leur visualisation.
+
+L'approche non supervisée a permis d'identifier automatiquement 81 thèmes d'incidents,
+regroupés ensuite en 11 catégories métier facilitant l'interprétation des résultats. Les
+métriques obtenues confirment la qualité du regroupement, avec un score de silhouette de
+0,590 pour HDBSCAN, supérieur à celui obtenu avec K-Means. La classification supervisée des
+anomalies a atteint un F1 pondéré de 0,615, démontrant qu'une partie importante des
+catégories d'incidents peut être prédite à partir du contenu textuel des rapports.
+
+L'analyse a également mis en évidence plusieurs tendances importantes, notamment la
+prédominance des incidents liés aux équipements et systèmes, l'augmentation des incursions au
+sol ainsi que l'émergence de problématiques plus récentes telles que les drones, le brouillage
+GPS ou le transport de batteries au lithium. La détection de signaux faibles a permis d'isoler
+des rapports atypiques susceptibles de révéler des risques émergents avant qu'ils ne
+deviennent fréquents.
+
+Enfin, les résultats ont été intégrés dans un dashboard interactif, permettant d'explorer les
+thèmes identifiés, les évolutions temporelles des incidents et les signaux faibles détectés.
+Cette interface transforme un corpus volumineux et difficilement exploitable en un outil
+d'aide à la décision accessible à des utilisateurs non spécialistes du traitement automatique
+du langage.
+
+Au-delà des performances obtenues, ce projet illustre l'intérêt des techniques de Machine
+Learning et de NLP pour l'analyse de données de sécurité à grande échelle. Des perspectives
+d'amélioration existent, notamment l'utilisation de modèles de langage spécialisés dans le
+domaine aéronautique, l'intégration d'approches de classification multi-labels et
+l'exploitation de données complémentaires afin d'améliorer encore la détection précoce des
+risques et l'interprétation des incidents.
 
 \vfill
 \noindent\footnotesize\textit{Sources des données : NASA Aviation Safety Reporting System
