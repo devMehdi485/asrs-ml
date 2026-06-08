@@ -1,7 +1,9 @@
 \documentclass[11pt,a4paper]{article}
 
+\usepackage{cmap}
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
+\usepackage{lmodern}
 \usepackage[french]{babel}
 \usepackage[a4paper,margin=2.35cm]{geometry}
 \usepackage{graphicx}
@@ -27,34 +29,35 @@
 \setlist[enumerate]{leftmargin=1.45em,itemsep=0.2em,topsep=0.2em}
 
 \pagestyle{fancy}\fancyhf{}
-\lhead{\small\color{nblue}Projet NLP ASRS}
+\lhead{\small\color{nblue}Projet Machine Learning ASRS}
 \rhead{\small\thepage}
 \renewcommand{\headrulewidth}{0.4pt}
 \captionsetup{font=small,labelfont={bf,color=nblue}}
 
-% Encadré « exemple concret »
-\newcommand{\exemple}[1]{\par\smallskip\noindent\colorbox{boxbg}{\parbox{\dimexpr\linewidth-2\fboxsep}{%
-  \small\textbf{\color{acc}Application aux données ASRS.} #1}}\par\smallskip}
+% Exemple d'application : fondu dans le texte (pas d'encadré)
+\newcommand{\exemple}[1]{\par\noindent #1}
 
 \begin{document}
 
 \begin{titlepage}
 \centering
 \vspace*{1.3cm}
-{\small\color{acc}\textbf{PROJET INFORMATIQUE -- NLP ET SÉCURITÉ AÉRIENNE}}\\[0.9cm]
+{\small\color{acc}\textbf{PROJET MACHINE LEARNING}}\\[0.9cm]
 {\color{nblue}\Huge\bfseries Analyse automatique des rapports\\[0.25cm] d'incidents NASA ASRS\par}
 \vspace{0.5cm}
 {\large Clustering thématique, classification des anomalies, signaux faibles\\ et tableau de bord d'aide à la décision\par}
 \vspace{0.45cm}
 {\itshape Rapport final académique}\par
-\vspace{0.6cm}
-{\large\bfseries TIDJANI Mehdi \quad\textbullet\quad FEUDJEU II LA GRACE \quad\textbullet\quad OUEDRAOGO Martin\par}
-\vspace{0.9cm}
-\includegraphics[width=0.9\textwidth]{scatter.png}\\[0.2cm]
-{\small Projection des 125\,763 rapports ASRS dans l'espace sémantique}
+\vspace{0.8cm}
+\begin{tabular}{c}
+{\Large\bfseries TIDJANI Mehdi}\\[0.25cm]
+{\Large\bfseries FEUDJEU II LA GRACE}\\[0.25cm]
+{\Large\bfseries OUEDRAOGO Martin}
+\end{tabular}
 \vfill
-\begin{tabular}{rl}
+\begin{tabular}{r p{0.68\textwidth}}
 \textbf{Données} & NASA ASRS -- 125\,763 rapports \\
+\textbf{Source Kaggle} & \href{https://www.kaggle.com/datasets/mnhagemann21/nasa-asrs-full-dataset-20052025}{NASA ASRS Full Dataset 2005--2025} \\
 \textbf{Période} & juin 2002 -- décembre 2025 \\
 \textbf{Méthodes} & TF-IDF, embeddings, UMAP, HDBSCAN, LDA, SVM \\
 \textbf{Livrables} & notebook, pipeline Python, dashboard Streamlit, dashboard React, rapport PDF \\
@@ -74,6 +77,10 @@ d'incidents aériens déclarés volontairement par les pilotes, contrôleurs et 
 opérationnels. Chaque rapport contient un récit en texte libre décrivant le contexte, le
 déroulement de l'incident et les facteurs contributifs. Le projet exploite un export de
 \textbf{125\,763 rapports} couvrant la période de juin 2002 à décembre 2025.
+
+Le jeu de données utilisé est le dataset Kaggle \emph{NASA ASRS Full Dataset 2005--2025},
+disponible sur
+\href{https://www.kaggle.com/datasets/mnhagemann21/nasa-asrs-full-dataset-20052025}{Kaggle}.
 
 % ===================================================================
 \section{Problématique}
@@ -180,6 +187,12 @@ concordance avec les catégories officielles (pureté de 0,165) n'est pas un dé
 reflète la granularité plus fine des thèmes issus du texte par rapport à la nomenclature des
 analystes.
 
+\begin{figure}[h]\centering
+  \includegraphics[width=0.82\textwidth]{scatter.png}
+  \caption{Projection UMAP des rapports ASRS : chaque point représente un rapport et la
+  couleur indique sa catégorie thématique.}\label{fig:umap}
+\end{figure}
+
 \begin{table}[h]\centering\small
 \caption{Indices internes de qualité du regroupement.}\label{tab:clust}
 \begin{tabular}{lrrrrr}
@@ -274,14 +287,40 @@ marchandises dangereuses.
 \section{Tableau de bord}
 
 Les résultats sont restitués dans deux tableaux de bord interactifs : une version
-\textbf{Streamlit} (Python) et une application web \textbf{React} (« AeroInsight AI »). Cette
-dernière comporte sept pages : une vue d'ensemble (volumes, répartition par catégorie), un
-explorateur de clusters (carte sémantique colorée par catégorie, sélection d'un thème, nuage
-de mots et récits représentatifs), une analyse thématique (importance et tendance de chaque
-thème), une carte temporelle, une page de signaux faibles, une page de prédiction (le
-classifieur s'exécute directement dans le navigateur sur un récit saisi) et une synthèse
-décisionnelle. L'objectif est de rendre les résultats explorables y compris par un lecteur
-non spécialiste.
+\textbf{Streamlit} (Python) et une application web \textbf{React} (« AeroInsight AI »).
+
+La version Streamlit a été simplifiée pour l'usage de présentation. Elle contient uniquement
+deux vues :
+\begin{itemize}
+  \item le \textbf{nuage de mots par cluster}, qui permet de comprendre rapidement le contenu
+  d'un thème ;
+  \item la \textbf{carte temporelle des incidents}, qui montre l'évolution des volumes et des
+  anomalies dans le temps.
+\end{itemize}
+
+La version React sert de tableau de bord complet. Elle permet d'explorer les catégories, les
+thèmes, les tendances temporelles, les signaux faibles et la prédiction d'anomalies.
+L'objectif est de rendre les résultats consultables par un lecteur non spécialiste du code.
+
+% ===================================================================
+\section{README -- lancement du dashboard}
+
+Pour lancer le dashboard React en local :
+
+\begin{verbatim}
+cd frontend
+npm install
+npm run dev
+\end{verbatim}
+
+L'application est ensuite disponible dans le navigateur à l'adresse indiquée par Vite
+(généralement \url{http://localhost:5173}).
+
+Pour lancer la version Streamlit :
+
+\begin{verbatim}
+streamlit run dashboard/app.py
+\end{verbatim}
 
 % ===================================================================
 \section{Implications et recommandations}
@@ -313,7 +352,8 @@ tableau de bord, et fournit des recommandations concrètes pour la sécurité a�
 
 \vfill
 \noindent\footnotesize\textit{Sources des données : NASA Aviation Safety Reporting System
-(\url{https://asrs.arc.nasa.gov/}) et jeu équivalent sur Kaggle. Code, dashboards et
-reproductibilité : \url{https://github.com/devMehdi485/asrs-ml}.}
+(\url{https://asrs.arc.nasa.gov/}) et dataset Kaggle
+\url{https://www.kaggle.com/datasets/mnhagemann21/nasa-asrs-full-dataset-20052025}. Code,
+dashboards et reproductibilité : \url{https://github.com/devMehdi485/asrs-ml}.}
 
 \end{document}

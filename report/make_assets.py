@@ -115,7 +115,9 @@ try:
         print("  reports_pre absent -> word2vec sauté")
 except Exception as e:
     print("  word2vec indisponible :", e)
-json.dump(w2v_out, open(os.path.join(ROOT, "report", "word2vec.json"), "w", encoding="utf-8"),
-          ensure_ascii=False, indent=2)
+# Ne pas écraser le fichier existant si word2vec n'a pas pu être recalculé
+if w2v_out:
+    json.dump(w2v_out, open(os.path.join(ROOT, "report", "word2vec.json"), "w", encoding="utf-8"),
+              ensure_ascii=False, indent=2)
 
 print("Assets générés dans report/figures/")
