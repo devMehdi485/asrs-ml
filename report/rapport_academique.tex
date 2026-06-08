@@ -142,6 +142,20 @@ deux récits décrivant le même événement avec des mots différents — situa
 des rapports rédigés librement — ce qui se traduit par un regroupement nettement plus
 cohérent (silhouette de 0,590, \S\,5.1).}
 
+\begin{table}[h]\centering\small
+\caption{Word2Vec — plus proches voisins (similarité cosinus) appris sur le corpus.}\label{tab:w2v}
+\begin{tabular}{ll}
+\toprule
+\textbf{Terme} & \textbf{Plus proches voisins} \\
+\midrule
+\texttt{runway}   & rwy (0,84), taxiway (0,65), intersecting (0,59) \\
+\texttt{engine}   & eng (0,69), feathered (0,57), magneto (0,54) \\
+\texttt{weather}  & thunderstorm (0,76), storm (0,74), bkn (0,68) \\
+\texttt{altitude} & alt (0,70), descended (0,67), descend (0,65) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
 \subsection{Clustering thématique}
 Les embeddings sont réduits par UMAP, puis regroupés. Deux algorithmes ont été comparés sur
 les mêmes données : K-Means et HDBSCAN. HDBSCAN a été retenu car il découvre lui-même le
@@ -263,6 +277,25 @@ SVM linéaire & 0,517 & 0,615 \\
 \end{tabular}
 \end{table}
 
+Le détail par classe (tableau~\ref{tab:perclass}) montre que les catégories au vocabulaire
+spécifique sont bien reconnues, tandis que les classes rares restent difficiles.
+
+\begin{table}[h]\centering\small
+\caption{Performance par classe (régression logistique).}\label{tab:perclass}
+\begin{tabular}{lrrr}
+\toprule
+\textbf{Catégorie d'anomalie} & \textbf{Précision} & \textbf{Rappel} & \textbf{F1} \\
+\midrule
+ATC Issue All Types & 0,86 & 0,68 & 0,76 \\
+Conflict NMAC & 0,65 & 0,73 & 0,69 \\
+Aircraft Equipment Problem Critical & 0,80 & 0,58 & 0,67 \\
+Conflict Ground Conflict & 0,52 & 0,64 & 0,58 \\
+Aircraft Equipment Problem Less Severe & 0,53 & 0,44 & 0,48 \\
+Conflict Airborne Conflict & 0,24 & 0,28 & 0,26 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
 \subsection{Signaux faibles détectés}
 La détection d'anomalies (Isolation Forest sur les représentations, complétée par le bruit
 HDBSCAN) isole les rapports les plus atypiques. Leur examen fait ressortir des thématiques
@@ -302,9 +335,14 @@ deux vues :
   anomalies dans le temps.
 \end{itemize}
 
-La version React sert de tableau de bord complet. Elle permet d'explorer les catégories, les
-thèmes, les tendances temporelles, les signaux faibles et la prédiction d'anomalies.
-L'objectif est de rendre les résultats consultables par un lecteur non spécialiste du code.
+La version React (« AeroInsight AI ») sert de tableau de bord complet, organisé en plusieurs
+pages : une vue d'ensemble, un \textbf{explorateur de clusters} (carte sémantique colorée par
+catégorie avec étiquettes et filtres par catégorie, plus le nuage de mots et les récits
+représentatifs du thème sélectionné, parmi les 81 thèmes / 11 catégories), une \textbf{analyse
+thématique} (importance et tendance de chaque thème), une \textbf{carte temporelle}, une page
+de \textbf{signaux faibles}, et une page de \textbf{prédiction} où le classifieur s'exécute
+directement dans le navigateur sur un récit saisi. L'objectif est de rendre les résultats
+consultables par un lecteur non spécialiste du code.
 
 % ===================================================================
 \section{README -- lancement du dashboard}
