@@ -3,6 +3,7 @@ import { Filter, ZoomIn } from "lucide-react";
 import { useData } from "../context";
 import { Card, Section, PageHeader, Trend, Chip, Intro, Explain } from "../components/ui";
 import ScatterCanvas from "../components/ScatterCanvas";
+import WordCloud from "../components/WordCloud";
 import { colorFor, fmt } from "../lib";
 
 const btn = "flex items-center gap-2 rounded-lg border border-line bg-surface px-3 py-2 text-sm text-muted hover:text-ink hover:border-accent/40 transition";
@@ -69,9 +70,7 @@ export default function ClusterExplorer() {
 
       <Card>
         <ScatterCanvas points={data!.scatter} activeIdx={activeIdx} color={colorFor} labels={labels} height={460} />
-        <Explain>les axes n'ont pas d'unité (c'est une projection mathématique) — seules
-          comptent la <b>proximité</b> des points et leur <b>couleur</b>. Des groupes de même
-          couleur bien séparés = des thèmes distincts et cohérents.</Explain>
+        <Explain>chaque point représente un rapport d'incident</Explain>
       </Card>
 
       <Section>{active ? `Thèmes — ${active}` : "Thèmes principaux"}</Section>
@@ -97,13 +96,9 @@ export default function ClusterExplorer() {
             <span className="font-bold">{cluster.name}</span>
             <span className="chip ml-1">{cluster.category}</span>
           </div>
-          <p className="mb-3 text-sm text-muted">{cluster.desc}</p>
-          <div className="flex flex-wrap">
-            {cluster.terms.map((t, i) => (
-              <span key={t} className="mr-2 mb-2 rounded-full border border-accent/30 bg-accent/10 px-3 py-1 font-semibold text-accent"
-                style={{ fontSize: `${1.1 - i * 0.045}rem` }}>{t}</span>
-            ))}
-          </div>
+          <p className="mb-2 text-sm text-muted">{cluster.desc}</p>
+          <div className="mb-1 text-xs font-semibold uppercase tracking-wider text-muted">Nuage de mots</div>
+          <WordCloud terms={cluster.terms} seed={cluster.id} />
         </Card>
         <Card>
           <div className="text-sm font-semibold">Synthèse métier</div>
