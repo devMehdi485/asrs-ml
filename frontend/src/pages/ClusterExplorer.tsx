@@ -13,6 +13,7 @@ export default function ClusterExplorer() {
   const cats = data!.categories;
   const catName = useMemo(() => cats.map((c) => c.category), [data]);
   const [active, setActive] = useState<string | null>(null);   // catégorie filtrée
+  const [showAll, setShowAll] = useState(false);               // afficher les 81 thèmes
   const [sel, setSel] = useState<number>(data!.clusters[0].id);
 
   const activeIdx = active ? catName.indexOf(active) : -1;
@@ -28,7 +29,9 @@ export default function ClusterExplorer() {
       .sort((x, y) => y[1].n - x[1].n).slice(0, 8)
       .map(([ci, a]) => ({ text: catName[+ci] || "", x: a.sx / a.n, y: a.sy / a.n }));
   }, [data, catName]);
-  const themes = active ? data!.clusters.filter((c) => c.category === active) : data!.clusters.slice(0, 12);
+  const themes = active
+    ? data!.clusters.filter((c) => c.category === active)
+    : (showAll ? data!.clusters : data!.clusters.slice(0, 12));
   const cluster = data!.clusters.find((c) => c.id === sel)!;
 
   return (
@@ -73,7 +76,17 @@ export default function ClusterExplorer() {
         <Explain>chaque point représente un rapport d'incident</Explain>
       </Card>
 
-      <Section>{active ? `Thèmes — ${active}` : "Thèmes principaux"}</Section>
+      <div className="sec flex items-center justify-between">
+        <span>{active
+          ? `Thèmes — ${active} (${themes.length})`
+          : `Thèmes principaux — ${showAll ? data!.meta.n_themes : 12} affichés sur ${data!.meta.n_themes}`}</span>
+        {!active && (
+          <button onClick={() => setShowAll((v) => !v)}
+            className="rounded-lg border border-line bg-surface px-3 py-1.5 text-xs font-semibold text-muted hover:text-ink hover:border-accent/40">
+            {showAll ? "Réduire" : `Afficher les ${data!.meta.n_themes} thèmes`}
+          </button>
+        )}
+      </div>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {themes.map((c) => (
           <button key={c.id} onClick={() => setSel(c.id)}
